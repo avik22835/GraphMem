@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: graphmem
+      POSTGRES_USER: graphmem
+      POSTGRES_PASSWORD: graphmem
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: ../.env
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
