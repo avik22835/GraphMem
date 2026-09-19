@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from api.db.postgres import init_pool, close_pool
 from api.db.neptune import init_neptune, close_neptune
-from api.routes import memory, conversations, topics
+from api.routes import memory, conversations, topics, utils
 
 
 @asynccontextmanager
@@ -24,6 +24,7 @@ app = FastAPI(
 app.include_router(memory.router, prefix="/memory", tags=["memory"])
 app.include_router(conversations.router, prefix="/conversations", tags=["conversations"])
 app.include_router(topics.router, prefix="/topics", tags=["topics"])
+app.include_router(utils.router, prefix="/utils", tags=["utils"])
 
 
 @app.get("/health")

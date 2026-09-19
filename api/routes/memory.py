@@ -9,6 +9,19 @@ from api.models import RecallResult
 
 router = APIRouter()
 
+def _serialize_node(row: dict) -> dict:
+    return {
+        "memory_id": str(row["memory_id"]),
+        "conversation_id": str(row["conversation_id"]),
+        "index": row["index"],
+        "prompt": row["prompt"],
+        "response": row["response"],
+        "timestamp_prompt": row["timestamp_prompt"].isoformat() if row.get("timestamp_prompt") else None,
+        "timestamp_response": row["timestamp_response"].isoformat() if row.get("timestamp_response") else None,
+        "status": row["status"],
+        "metadata": dict(row["metadata"]) if row.get("metadata") else {},
+    }
+
 
 # ── Request / Response schemas ────────────────────────────────────────────────
 
@@ -78,4 +91,42 @@ async def recall(body: RecallRequest):
     )
 
 
-# Block 5: get, delete, neighbourhood, stats, export, add_batch, count_tokens
+@router.get("/{memory_id}")
+async def get_node(memory_id: str):
+    row = await memory_svc.get_node(memory_id)
+    return _serialize_node(row)
+
+
+@router.delete("/{memory_id}", status_code=204)
+async def delete_node(memory_id: str):
+    await memory_svc.delete_node(memory_id)
+
+
+@router.get("/{memory_id}/neighbours")
+async def get_neighbourhood(memory_id: str):
+    neighbours = await memory_svc.get_neighbourhood(memory_id)
+    return [
+        {**_serialize_node(n), "edge_weight": n["edge_weight"]}
+        for n in neighbours
+    ]
+
+
+class BatchItem(BaseModel):
+    conversation_id: str
+    prompt: str
+    response: str
+    timestamp_prompt: Optional[datetime] = None
+    timestamp_response: Optional[datetime] = None
+    metadata: Optional[dict] = {}
+
+class AddBatchRequest(BaseModel):
+    items: list[BatchItem] = Field(..., min_length=1, max_length=100)
+
+@router.post("/batch", status_code=201)
+async def add_batch(body: AddBatchRequest):
+    items = [i.model_dump() for i in body.items]
+    memory_ids = await memory_svc.add_batch(items)
+    # Push SQS job for each complete node
+    for idx, mem_id in enumerate(memory_ids):
+        push_node_job(memory_id=mem_id, conversation_id=items[idx]["conversation_id"])
+    return {"memory_ids": memory_ids, "count": len(memory_ids)}
