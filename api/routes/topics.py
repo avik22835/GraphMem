@@ -1,8 +1,9 @@
 from typing import Optional, Literal
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from api.services import topics as topic_svc
 from api.models import TopicRetrievalResult
+from api.auth.dependencies import require_write
 
 router = APIRouter()
 
@@ -57,7 +58,7 @@ async def retrieve_by_topics(body: RetrieveByTopicsRequest):
 
 
 @router.post("/recompute", status_code=202)
-async def recompute_topics(conversation_id: str = Query(...)):
+async def recompute_topics(conversation_id: str = Query(...), _: dict = Depends(require_write)):
     await topic_svc.recompute_topics(conversation_id)
     return {"status": "accepted", "message": "Topic recompute queued"}
 

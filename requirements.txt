@@ -12,3 +12,4 @@ tiktoken==0.7.0
 python-louvain==0.16
 networkx==3.3
 python-multipart==0.0.9
+bcrypt==4.2.0

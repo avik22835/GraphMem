@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import Optional, Literal
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from api.services import memory as memory_svc
 from api.services.sqs import push_node_job
 from api.services.graph import recall as graph_recall
 from api.models import RecallResult
+from api.auth.dependencies import require_write
 
 router = APIRouter()
 
@@ -54,7 +55,7 @@ class RecallRequest(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.post("/prompt", response_model=AddPromptResponse, status_code=201)
-async def add_prompt(body: AddPromptRequest):
+async def add_prompt(body: AddPromptRequest, _: dict = Depends(require_write)):
     memory_id = await memory_svc.create_pending_node(
         conversation_id=body.conversation_id,
         content=body.content,
@@ -65,7 +66,7 @@ async def add_prompt(body: AddPromptRequest):
 
 
 @router.post("/{memory_id}/response", status_code=200)
-async def add_response(memory_id: str, body: AddResponseRequest):
+async def add_response(memory_id: str, body: AddResponseRequest, _: dict = Depends(require_write)):
     await memory_svc.attach_response(
         memory_id=memory_id,
         conversation_id=body.conversation_id,
@@ -98,13 +99,18 @@ async def get_node(memory_id: str):
 
 
 @router.delete("/{memory_id}", status_code=204)
-async def delete_node(memory_id: str):
+async def delete_node(memory_id: str, _: dict = Depends(require_write)):
     await memory_svc.delete_node(memory_id)
 
 
 @router.get("/{memory_id}/neighbours")
-async def get_neighbourhood(memory_id: str):
-    neighbours = await memory_svc.get_neighbourhood(memory_id)
+async def get_neighbourhood(
+    memory_id: str,
+    threshold: float = Query(0.7, ge=0.0, le=1.0),
+    limit: Optional[int] = Query(None, ge=1, le=200),
+    order: Literal["relevance", "timestamp"] = Query("relevance"),
+):
+    neighbours = await memory_svc.get_neighbourhood(memory_id, threshold=threshold, limit=limit, order=order)
     return [
         {**_serialize_node(n), "edge_weight": n["edge_weight"]}
         for n in neighbours
@@ -123,7 +129,7 @@ class AddBatchRequest(BaseModel):
     items: list[BatchItem] = Field(..., min_length=1, max_length=100)
 
 @router.post("/batch", status_code=201)
-async def add_batch(body: AddBatchRequest):
+async def add_batch(body: AddBatchRequest, _: dict = Depends(require_write)):
     items = [i.model_dump() for i in body.items]
     memory_ids = await memory_svc.add_batch(items)
     # Push SQS job for each complete node

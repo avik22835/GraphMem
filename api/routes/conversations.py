@@ -1,9 +1,10 @@
 from typing import Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from api.services import conversations as conv_svc
 from api.models import Conversation
+from api.auth.dependencies import require_write
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ class CreateConversationRequest(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.post("", status_code=201)
-async def create_conversation(body: CreateConversationRequest):
+async def create_conversation(body: CreateConversationRequest, _: dict = Depends(require_write)):
     conv_id = await conv_svc.create_conversation(metadata=body.metadata or {})
     return {"conversation_id": conv_id}
 
@@ -38,7 +39,7 @@ async def list_conversations():
 
 
 @router.delete("/{conversation_id}", status_code=204)
-async def delete_conversation(conversation_id: str):
+async def delete_conversation(conversation_id: str, _: dict = Depends(require_write)):
     await conv_svc.delete_conversation(conversation_id)
 
 
