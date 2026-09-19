@@ -22,7 +22,19 @@ jobs:
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push image
+      - name: Build and push API image
         run: |
           docker build -t 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:latest .
           docker push 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:latest
+
+      - name: Build and push node-worker image
+        run: |
+          docker build -t 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:node-worker \
+            -f workers/node_worker/Dockerfile workers/node_worker/
+          docker push 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:node-worker
+
+      - name: Build and push topic-worker image
+        run: |
+          docker build -t 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker \
+            -f workers/topic_worker/Dockerfile workers/topic_worker/
+          docker push 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker

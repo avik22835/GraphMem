@@ -57,6 +57,7 @@ def embed(text: str) -> np.ndarray:
             "model": "jina-embeddings-v4",
             "input": [text],
             "task": "retrieval.passage",
+            "dimensions": 1024,
         },
         timeout=30.0,
     )
