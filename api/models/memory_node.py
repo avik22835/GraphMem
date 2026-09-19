@@ -29,3 +29,11 @@ class RecallResult(BaseModel):
     text: str                   # formatted as [{"role": ..., "content": ...}] JSON — ready to inject
     total_tokens: int
     strategy_used: str          # "cold_start" | "semantic" | "semantic_recency"
+
+
+class TopicRetrievalResult(BaseModel):
+    messages: list[MemoryNodeWithScore]
+    text: str                   # same OpenAI JSON format as RecallResult
+    total_tokens: int
+    topics_used: list[str]      # topic_ids that contributed messages — Layer 2 only
+    strategy_used: str          # "retrieve_by_topic" | "retrieve_by_topics"
