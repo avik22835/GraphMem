@@ -37,7 +37,11 @@ class Settings(BaseSettings):
     default_max_tokens: int = 2000
     topic_recompute_interval: int = 20
     cold_start_min_nodes: int = 5
-    default_recency_half_life: float = 3600.0   # seconds — recency score halves every hour
+    default_recency_half_life: float = 3600.0
+    louvain_default_resolution: float = 1.0
+    topic_min_cluster_size: int = 2
+    topic_label_representative_count: int = 5
+    topic_label_recent_count: int = 3
 
     class Config:
         env_file = ".env"

@@ -117,41 +117,47 @@ async def delete_node(memory_id: str) -> None:
         conv_uuid = node["conversation_id"]
         was_complete = node["status"] == "complete"
 
-        # Find topics that contain this node — mark them dirty
-        topic_rows = await conn.fetch(
-            """SELECT topic_id FROM topics
-               WHERE conversation_id = $1 AND message_ids @> $2::jsonb""",
-            conv_uuid,
-            json.dumps([memory_id]),
-        )
-        if topic_rows:
-            dirty_ids = json.dumps([str(r["topic_id"]) for r in topic_rows])
-            await conn.execute(
-                """UPDATE conversations
-                   SET dirty_topics = (
-                       SELECT jsonb_agg(DISTINCT elem)
-                       FROM jsonb_array_elements_text(dirty_topics || $1::jsonb) elem
-                   )
-                   WHERE conversation_id = $2""",
-                dirty_ids,
+        async with conn.transaction():
+            # Find topics that contain this node — mark them dirty
+            topic_rows = await conn.fetch(
+                """SELECT topic_id FROM topics
+                   WHERE conversation_id = $1 AND message_ids @> $2::jsonb""",
                 conv_uuid,
+                json.dumps([memory_id]),
             )
+            if topic_rows:
+                dirty_ids = json.dumps([str(r["topic_id"]) for r in topic_rows])
+                await conn.execute(
+                    """UPDATE conversations
+                       SET dirty_topics = (
+                           SELECT jsonb_agg(DISTINCT elem)
+                           FROM jsonb_array_elements_text(dirty_topics || $1::jsonb) elem
+                       )
+                       WHERE conversation_id = $2""",
+                    dirty_ids,
+                    conv_uuid,
+                )
 
-        # Hard delete node from Postgres
-        await conn.execute("DELETE FROM memory_nodes WHERE memory_id = $1", mem_uuid)
+            # Hard delete node from Postgres
+            await conn.execute("DELETE FROM memory_nodes WHERE memory_id = $1", mem_uuid)
 
-        # Decrement node_count only if the node was fully processed
-        if was_complete:
-            await conn.execute(
-                "UPDATE conversations SET node_count = node_count - 1 WHERE conversation_id = $1",
-                conv_uuid,
-            )
+            # Decrement node_count only if the node was fully processed
+            if was_complete:
+                await conn.execute(
+                    "UPDATE conversations SET node_count = node_count - 1 WHERE conversation_id = $1",
+                    conv_uuid,
+                )
 
-    # Drop Neptune vertex (cascades incident edges)
+    # Drop Neptune vertex (cascades incident edges) — after Postgres commit
     await asyncio.to_thread(_drop_vertex, memory_id)
 
 
-async def get_neighbourhood(memory_id: str) -> list[dict]:
+async def get_neighbourhood(
+    memory_id: str,
+    threshold: float = 0.7,
+    limit: int | None = None,
+    order: str = "relevance",
+) -> list[dict]:
     pool = get_pool()
     mem_uuid = _parse_uuid(memory_id)
 
@@ -162,15 +168,13 @@ async def get_neighbourhood(memory_id: str) -> list[dict]:
         if not exists:
             raise MemoryNodeNotFound(memory_id)
 
-    # Fetch 1-hop neighbours + weights from Neptune (sync in thread)
-    raw = await asyncio.to_thread(_get_neighbours_neptune, memory_id)
+    raw = await asyncio.to_thread(_get_neighbours_neptune, memory_id, threshold)
     if not raw:
         return []
 
     neighbour_ids = [r["neighbour_id"] for r in raw]
     weight_map = {r["neighbour_id"]: r["weight"] for r in raw}
 
-    # Fetch full node data from Postgres
     uuid_list = [uuid.UUID(nid) for nid in neighbour_ids]
     async with pool.acquire() as conn:
         rows = await conn.fetch(
@@ -181,10 +185,17 @@ async def get_neighbourhood(memory_id: str) -> list[dict]:
             uuid_list,
         )
 
-    return [
+    results = [
         {**dict(r), "edge_weight": weight_map.get(str(r["memory_id"]), 0.0)}
         for r in rows
     ]
+
+    if order == "relevance":
+        results.sort(key=lambda x: x["edge_weight"], reverse=True)
+    else:
+        results.sort(key=lambda x: x["timestamp_prompt"])
+
+    return results[:limit] if limit else results
 
 
 async def add_batch(items: list[dict]) -> list[str]:
@@ -246,13 +257,15 @@ def _drop_vertex(memory_id: str) -> None:
     g.V().has("memory_node", "memory_id", memory_id).drop().iterate()
 
 
-def _get_neighbours_neptune(memory_id: str) -> list[dict]:
+def _get_neighbours_neptune(memory_id: str, threshold: float = 0.7) -> list[dict]:
     from gremlin_python.process.graph_traversal import __
+    from gremlin_python.process.traversal import P
     g = get_traversal()
     return (
         g.V()
         .has("memory_node", "memory_id", memory_id)
         .bothE("similar_to")
+        .has("weight", P.gte(threshold))
         .project("neighbour_id", "weight")
         .by(__.otherV().values("memory_id"))
         .by("weight")

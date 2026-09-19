@@ -14,7 +14,7 @@ async def create_conversation(metadata: dict) -> str:
     async with pool.acquire() as conn:
         conv_id = await conn.fetchval(
             """INSERT INTO conversations (metadata) VALUES ($1) RETURNING conversation_id""",
-            json.dumps(metadata),
+            metadata,
         )
     return str(conv_id)
 
@@ -70,7 +70,9 @@ async def get_stats(conversation_id: str) -> dict:
 
     async with pool.acquire() as conn:
         conv = await conn.fetchrow(
-            "SELECT node_count, created_at FROM conversations WHERE conversation_id = $1",
+            """SELECT node_count, created_at, last_topic_recompute,
+                      jsonb_array_length(dirty_topics) AS dirty_topics_count
+               FROM conversations WHERE conversation_id = $1""",
             conv_uuid,
         )
         if not conv:
@@ -89,19 +91,25 @@ async def get_stats(conversation_id: str) -> dict:
             "SELECT COUNT(*) FROM topics WHERE conversation_id = $1", conv_uuid
         )
 
-    # Edge count from Neptune — bidirectional pairs stored, divide by 2 for logical edges
     raw_edge_count = await asyncio.to_thread(_count_edges, conversation_id)
-    edge_count = raw_edge_count // 2
+    edge_count     = raw_edge_count // 2
+    node_count     = conv["node_count"]
+    avg_degree     = round((2 * edge_count) / node_count, 4) if node_count > 0 else 0.0
+    graph_density  = round((2 * edge_count) / (node_count * (node_count - 1)), 4) if node_count > 1 else 0.0
 
     return {
-        "conversation_id": conversation_id,
-        "node_count": conv["node_count"],
-        "complete_count": counts["complete_count"],
-        "pending_count": counts["pending_count"],
-        "topic_count": topic_count,
-        "edge_count": edge_count,
-        "last_activity": counts["last_activity"],
-        "created_at": conv["created_at"],
+        "conversation_id":      conversation_id,
+        "node_count":           node_count,
+        "complete_count":       counts["complete_count"],
+        "pending_count":        counts["pending_count"],
+        "topic_count":          topic_count,
+        "edge_count":           edge_count,
+        "avg_degree":           avg_degree,
+        "graph_density":        graph_density,
+        "dirty_topics_count":   conv["dirty_topics_count"],
+        "last_topic_recompute": conv["last_topic_recompute"],
+        "last_activity":        counts["last_activity"],
+        "created_at":           conv["created_at"],
     }
 
 

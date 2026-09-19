@@ -46,7 +46,7 @@ async def recall(
             raise ConversationNotFound(conversation_id)
 
         if node_count < settings.cold_start_min_nodes:
-            return await _cold_start(conn, conv_uuid, _max_tok)
+            return await _cold_start(conn, conv_uuid, _max_tok, conversation_id)
 
         # ── Embed query synchronously ─────────────────────────────────────────
         q_emb = await embed_query(query)
@@ -107,12 +107,12 @@ async def recall(
         merged = {c["memory_id"]: c for c in [*survivors, *r_candidates]}
         sorted_nodes = sorted(merged.values(), key=lambda x: x["timestamp_prompt"])
 
-        return _build_result(sorted_nodes, strategy)
+        return _build_result(sorted_nodes, strategy, conversation_id)
 
 
 # ── Cold start ────────────────────────────────────────────────────────────────
 
-async def _cold_start(conn, conv_uuid: uuid.UUID, max_tokens: int) -> RecallResult:
+async def _cold_start(conn, conv_uuid: uuid.UUID, max_tokens: int, conversation_id: str) -> RecallResult:
     rows = await conn.fetch(
         """SELECT memory_id, prompt, response, timestamp_prompt, timestamp_response,
                   status, metadata, index
@@ -129,7 +129,7 @@ async def _cold_start(conn, conv_uuid: uuid.UUID, max_tokens: int) -> RecallResu
         nodes.append(_to_candidate(row, 0.0))
         total += t
 
-    return _build_result(nodes, "cold_start")
+    return _build_result(nodes, "cold_start", conversation_id)
 
 
 # ── Set B ─────────────────────────────────────────────────────────────────────
@@ -252,14 +252,14 @@ def _budget_cut(candidates: list[dict], budget: int) -> list[dict]:
 
 # ── Build RecallResult ────────────────────────────────────────────────────────
 
-def _build_result(nodes: list[dict], strategy_used: str) -> RecallResult:
+def _build_result(nodes: list[dict], strategy_used: str, conversation_id: str = "") -> RecallResult:
     messages, text_list, total = [], [], 0
     for node in nodes:
         tc = count_node_tokens(node["prompt"], node["response"])
         total += tc
         messages.append(MemoryNodeWithScore(
             memory_id=str(node["memory_id"]),
-            conversation_id=str(node.get("conversation_id", "")),
+            conversation_id=str(node.get("conversation_id") or conversation_id),
             index=node["index"],
             prompt=node["prompt"],
             response=node.get("response"),
