@@ -1,11 +1,11 @@
-name: Build and Push to ECR
+name: Build, Push and Deploy
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -39,10 +39,26 @@ jobs:
             -f workers/topic_worker/Dockerfile workers/topic_worker/
           docker push 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker
 
-      - name: Deploy to ECS
+      - name: Register new task definition revision
         run: |
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition graphmem-task --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF | python3 -c "
+          import json, sys
+          td = json.load(sys.stdin)
+          for c in td['containerDefinitions']:
+              if c['name'] == 'graphmem-api':
+                  c['image'] = '748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:latest'
+          keys = ['taskDefinitionArn','revision','status','requiresAttributes','compatibilities','registeredAt','registeredBy','deregisteredAt']
+          [td.pop(k, None) for k in keys]
+          print(json.dumps(td))
+          ")
+          aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF"
+
+      - name: Deploy new revision to ECS
+        run: |
+          LATEST=$(aws ecs describe-task-definition --task-definition graphmem-task --query 'taskDefinition.revision' --output text)
           aws ecs update-service \
             --cluster graphmem-cluster \
             --service graphmem-service \
-            --force-new-deployment \
+            --task-definition graphmem-task:$LATEST \
             --region us-east-1
