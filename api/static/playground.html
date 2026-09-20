@@ -224,7 +224,10 @@
       <select class="pg-conv-select" id="convSelect" onchange="switchConv(this.value)">
         <option value="conv2">SaaS App Build (auth → payments → backend)</option>
         <option value="conv1">Multi-topic Chat (cooking → travel → coding)</option>
+        <option value="custom">Custom ID…</option>
       </select>
+      <input id="customConvInput" class="pg-conv-select" type="text" placeholder="Paste conv ID here"
+        style="display:none;margin-top:6px" oninput="refreshCode()"/>
     </div>
     <div class="pg-method-list" id="methodList"></div>
   </aside>
@@ -243,12 +246,15 @@ const CONF = {
 const state = {
   conv: 'conv2', method: 'memory.recall', outputTab: 'cards',
   cache: {
-    conv1: { nodes:[], topics:[], nodeId:null, topicId:null },
-    conv2: { nodes:[], topics:[], nodeId:null, topicId:null }
+    conv1:   { nodes:[], topics:[], nodeId:null, topicId:null },
+    conv2:   { nodes:[], topics:[], nodeId:null, topicId:null },
+    custom:  { nodes:[], topics:[], nodeId:null, topicId:null }
   }
 };
 
-const convId = () => CONF[state.conv].id;
+const convId = () => state.conv === 'custom'
+  ? (document.getElementById('customConvInput')?.value?.trim() || '')
+  : CONF[state.conv].id;
 const cache  = () => state.cache[state.conv];
 
 function getApiKey() {
@@ -464,15 +470,15 @@ dataset = [{"prompt":n["prompt"],"completion":n["response"]} for n in nodes]`,
   },
   {
     id:'conversations.delete', ns:'conversations', label:'delete', badge:'DELETE', http:'DELETE /conversations/{conv_id}',
-    desc:'Permanently deletes a conversation and all its nodes, topics, and Neptune graph edges. Demo creates a temp conversation then deletes it.',
+    desc:'Permanently deletes a conversation and all its nodes, topics, and Neptune graph edges.',
     usecase:'User deletes their account or session expires — GDPR cleanup, storage hygiene.',
-    params:[],
-    code:()=>
-`gm.conversations.delete(conv_id=expired_session_conv_id)`,
-    execute: async () => {
-      const {conversation_id} = await (await apiFetch('/conversations',{method:'POST',body:'{}'})).json();
-      await apiFetch(`/conversations/${conversation_id}`,{method:'DELETE'});
-      return {deleted:conversation_id,status:'ok'};
+    params:[{id:'conv_id',label:'Conv ID',type:'text',def:'',defConv1:'0eaf5486-63c6-4f5c-a4d8-5c761f1fa91d',defConv2:'0fd00ae3-5ffe-48f9-a3dc-6ac2e6badb16'}],
+    code:(cid,p)=>
+`gm.conversations.delete(conv_id="${p.conv_id||cid}")`,
+    execute: async (cid,p) => {
+      const target = p.conv_id || cid;
+      await apiFetch(`/conversations/${target}`,{method:'DELETE'});
+      return {deleted:target, status:'ok'};
     }
   },
   // ── TOPICS ─────────────────────────────────────────────────────────
@@ -760,7 +766,12 @@ function selectMethod(id) {
   renderSidebar();
   const m=METHODS.find(x=>x.id===id); if (m) renderPanel(m);
 }
-function switchConv(k) { state.conv=k; selectMethod(state.method); }
+function switchConv(k) {
+  state.conv = k;
+  const inp = document.getElementById('customConvInput');
+  if (inp) inp.style.display = k === 'custom' ? 'block' : 'none';
+  selectMethod(state.method);
+}
 
 function switchTab(t) {
   state.outputTab=t;
