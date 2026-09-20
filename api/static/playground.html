@@ -345,26 +345,35 @@ print(f"Node created: {memory_id}")`,
     execute: async (cid,p) => {
       const r = await apiFetch('/memory/prompt',{method:'POST',
         body:JSON.stringify({conversation_id:cid,content:p.content})});
-      return r.json();
+      const d = await r.json();
+      if (d.memory_id) { cache().nodeId = d.memory_id; }
+      return d;
     }
   },
   {
     id:'memory.add_response', ns:'memory', label:'add_response', badge:'POST', http:'POST /memory/{memory_id}/response',
     desc:"Attaches the LLM's response to a pending node, marking it complete. Triggers the async pipeline: embedding → Neptune edges → topic recompute.",
     usecase:'Your LLM has replied. Call add_response() to seal the node — it becomes searchable via recall() within seconds.',
-    params:[{id:'content',label:'Response',type:'text',
-      defConv1:'Crème brûlée requires a kitchen torch for the caramelized sugar top.',
-      defConv2:'On each refresh token use, issue a brand new one and invalidate the old (rotation pattern).'}],
+    params:[
+      {id:'memory_id',label:'memory_id',type:'text',def:'',
+        hint:'Paste the memory_id returned by add_prompt'},
+      {id:'content',label:'Response',type:'text',
+        defConv1:'Crème brûlée requires a kitchen torch for the caramelized sugar top.',
+        defConv2:'On each refresh token use, issue a brand new one and invalidate the old (rotation pattern).'}
+    ],
     code:(cid,p)=>
 `gm.memory.add_response(
-    memory_id=memory_id,
+    memory_id="${p.memory_id||'<paste memory_id from add_prompt>'}",
     conv_id="${cid}",
     content=llm_response,
 )`,
     execute: async (cid,p) => {
-      const pR = await apiFetch('/memory/prompt',{method:'POST',
-        body:JSON.stringify({conversation_id:cid,content:'Demo prompt for add_response'})});
-      const {memory_id} = await pR.json();
+      let memory_id = p.memory_id?.trim();
+      if (!memory_id) {
+        const pR = await apiFetch('/memory/prompt',{method:'POST',
+          body:JSON.stringify({conversation_id:cid,content:'Demo prompt for add_response'})});
+        memory_id = (await pR.json()).memory_id;
+      }
       const r = await apiFetch(`/memory/${memory_id}/response`,{method:'POST',
         body:JSON.stringify({conversation_id:cid,content:p.content})});
       return {memory_id,...(await r.json())};
