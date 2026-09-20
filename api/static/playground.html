@@ -6,7 +6,6 @@
   <title>Playground — GraphMem</title>
   <link rel="stylesheet" href="/static/css/styles.css"/>
   <style>
-    /* ── Layout override ─────────────────────────────────────────── */
     body { overflow: hidden; }
     .pg-wrap {
       position: fixed !important;
@@ -14,53 +13,35 @@
       left: 0; right: 0; bottom: 0;
       display: flex !important;
       padding: 0 !important;
-      margin: 0;
     }
 
-    /* ── Sidebar ─────────────────────────────────────────────────── */
+    /* Sidebar */
     .pg-sidebar {
-      width: 232px; min-width: 232px;
+      width: 210px; min-width: 210px;
       background: var(--surface);
       border-right: 1px solid var(--border);
       display: flex; flex-direction: column; overflow: hidden;
     }
-    .pg-sidebar-top {
-      padding: 14px 14px 12px;
-      border-bottom: 1px solid var(--border);
-    }
+    .pg-sidebar-top { padding: 12px 14px; border-bottom: 1px solid var(--border); }
     .pg-field-label {
       font-size: 10px; font-weight: 700; color: var(--text-3);
-      text-transform: uppercase; letter-spacing: .9px; margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: .9px; margin-bottom: 6px;
     }
-    .pg-api-key, .pg-conv-select {
-      width: 100%; box-sizing: border-box;
-      background: var(--bg); border: 1px solid var(--border-2);
-      border-radius: 5px; color: var(--text);
-      font-size: 11px; padding: 6px 9px;
-      font-family: var(--mono);
+    .pg-conv-select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border-2);
+      border-radius: 5px; color: var(--text); font-size: 12px;
+      padding: 6px 9px; cursor: pointer; font-family: var(--font);
     }
-    .pg-api-key { margin-bottom: 10px; }
-    .pg-api-key::placeholder { color: var(--text-3); }
-    .pg-conv-select { cursor: pointer; }
-    .pg-get-key {
-      display: block; margin-top: 7px;
-      font-size: 11px; color: var(--accent);
-      text-decoration: none; font-weight: 600;
-    }
-    .pg-get-key:hover { opacity: .8; }
     .pg-method-list { flex: 1; overflow-y: auto; padding: 4px 0 24px; }
     .pg-ns-head {
       font-size: 10px; font-weight: 700; color: var(--text-3);
-      text-transform: uppercase; letter-spacing: .9px;
-      padding: 14px 14px 4px;
+      text-transform: uppercase; letter-spacing: .9px; padding: 14px 14px 4px;
     }
     .pg-item {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 14px 5px 20px;
-      font-size: 12.5px; color: var(--text-2);
+      padding: 5px 14px 5px 20px; font-size: 12.5px; color: var(--text-2);
       cursor: pointer; border-left: 2px solid transparent;
-      transition: all .1s; font-family: var(--mono);
-      user-select: none;
+      transition: all .1s; font-family: var(--mono); user-select: none;
+      display: flex; align-items: center; gap: 6px;
     }
     .pg-item:hover { color: var(--text); background: var(--surface-2); }
     .pg-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,255,136,.04); }
@@ -69,17 +50,13 @@
       border-radius: 3px; padding: 1px 4px; font-family: var(--font);
     }
 
-    /* ── Main panel ──────────────────────────────────────────────── */
-    .pg-main {
-      flex: 1; overflow-y: auto;
-      padding: 32px 44px 72px;
-      background: var(--bg);
-    }
+    /* Main */
+    .pg-main { flex: 1; overflow-y: auto; padding: 30px 44px 72px; background: var(--bg); }
     .method-title {
       font-size: 20px; font-weight: 700; color: var(--text);
       margin: 0 0 3px; font-family: var(--mono); letter-spacing: -.02em;
     }
-    .method-http { font-size: 12px; color: var(--text-3); margin: 0 0 20px; font-family: var(--mono); }
+    .method-http { font-size: 12px; color: var(--text-3); margin: 0 0 18px; font-family: var(--mono); }
     .badge {
       display: inline-block; font-size: 10px; font-weight: 700;
       padding: 2px 7px; border-radius: 3px; margin-left: 8px;
@@ -87,40 +64,35 @@
     }
     .b-POST   { background: rgba(0,255,136,.12); color: var(--accent); }
     .b-GET    { background: rgba(91,154,245,.12); color: var(--blue); }
-    .b-DELETE { background: rgba(255,85,85,.12); color: var(--red); }
+    .b-DELETE { background: rgba(255,85,85,.12);  color: var(--red); }
     .method-desc { font-size: 14px; color: var(--text-2); line-height: 1.65; margin-bottom: 16px; }
     .usecase-box {
-      background: rgba(0,255,136,.04);
-      border: 1px solid rgba(0,255,136,.15);
-      border-left: 3px solid var(--accent);
-      border-radius: 8px; padding: 12px 16px; margin-bottom: 26px;
+      background: rgba(0,255,136,.04); border: 1px solid rgba(0,255,136,.14);
+      border-left: 3px solid var(--accent); border-radius: 8px;
+      padding: 11px 15px; margin-bottom: 24px;
     }
-    .uc-label {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .8px; color: var(--accent); margin-bottom: 5px;
-    }
-    .uc-text { font-size: 13px; color: rgba(0,255,136,.7); margin: 0; line-height: 1.55; }
+    .uc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--accent); margin-bottom: 4px; }
+    .uc-text  { font-size: 13px; color: rgba(0,255,136,.65); margin: 0; line-height: 1.55; }
     .sec-label {
       font-size: 10px; font-weight: 700; color: var(--text-3);
       text-transform: uppercase; letter-spacing: .9px; margin: 0 0 8px;
     }
     pre.code-block {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 16px 18px;
-      font-family: var(--mono); font-size: 12.5px;
-      line-height: 1.75; color: var(--text);
-      overflow-x: auto; margin: 0 0 20px; white-space: pre;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 15px 18px; font-family: var(--mono); font-size: 12.5px;
+      line-height: 1.75; color: var(--text); overflow-x: auto; margin: 0 0 20px; white-space: pre;
     }
     .ck { color: #ff7b72; } .cs { color: #79c0ff; }
     .cc { color: var(--text-3); } .cn { color: #f2cc60; }
-    .params-wrap { margin-bottom: 20px; }
-    .param-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
-    .param-label { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 100px; }
+
+    /* Params */
+    .params-wrap { margin-bottom: 18px; }
+    .param-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .param-label { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 90px; }
     .param-input {
       flex: 1; border: 1px solid var(--border-2); border-radius: 5px;
       padding: 6px 10px; font-size: 13px; font-family: var(--mono);
-      color: var(--text); background: var(--surface);
-      transition: border-color .12s;
+      color: var(--text); background: var(--surface); transition: border-color .12s;
     }
     .param-input:focus { outline: none; border-color: var(--accent); }
     .param-input[type=number] { max-width: 90px; }
@@ -129,12 +101,23 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 5px; padding: 6px 10px; word-break: break-all;
     }
+    .param-api-key { border-color: rgba(0,255,136,.25) !important; }
+    .param-api-key:focus { border-color: var(--accent) !important; }
+    .param-jwt-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 5px;
+      border: 1px solid; font-size: 12px; flex: 1;
+    }
+    .param-jwt-ok  { border-color: rgba(0,255,136,.25); color: var(--accent); background: rgba(0,255,136,.05); }
+    .param-jwt-bad { border-color: rgba(255,85,85,.25);  color: var(--red);    background: rgba(255,85,85,.05); }
+
+    /* Buttons */
     .run-btn {
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--accent); color: #0c0c0c;
       border: none; border-radius: 6px; padding: 9px 22px;
       font-size: 13px; font-weight: 700; cursor: pointer;
-      transition: all .12s; margin-bottom: 24px;
+      transition: all .12s; margin-bottom: 22px;
     }
     .run-btn:hover { opacity: .88; transform: translateY(-1px); }
     .run-btn:active { transform: none; }
@@ -145,83 +128,75 @@
       animation: spin .65s linear infinite; display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .jwt-notice {
-      background: rgba(255,204,68,.06); border: 1px solid rgba(255,204,68,.2);
-      border-radius: 7px; padding: 11px 14px;
-      font-size: 13px; color: var(--yellow); margin-bottom: 18px;
-    }
-    .nokey-notice {
-      display: none; background: rgba(91,154,245,.06);
-      border: 1px solid rgba(91,154,245,.2); border-radius: 7px;
-      padding: 11px 14px; font-size: 13px; color: var(--blue); margin-bottom: 18px;
-    }
-    .nokey-notice a { color: var(--accent); font-weight: 600; }
 
-    /* ── Output ──────────────────────────────────────────────────── */
-    .output-tabs {
-      display: flex; gap: 0; margin-bottom: 0;
-      border-bottom: 1px solid var(--border);
-    }
+    /* Output */
+    .output-wrap { border: 1px solid var(--border); border-radius: 8px; }
+    .output-tabs { display: flex; border-bottom: 1px solid var(--border); }
     .output-tab {
-      padding: 6px 14px; font-size: 12px; font-weight: 600;
-      color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent;
-      margin-bottom: -1px; transition: all .1s; user-select: none;
+      padding: 6px 14px; font-size: 12px; font-weight: 600; color: var(--text-3);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all .1s; user-select: none;
     }
     .output-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     .output-panel {
-      background: var(--surface); border: 1px solid var(--border);
-      border-top: none; border-radius: 0 0 8px 8px;
-      padding: 14px 18px; font-family: var(--mono);
+      background: var(--surface); padding: 13px 16px; font-family: var(--mono);
       font-size: 12.5px; line-height: 1.6; color: var(--text);
-      max-height: 380px; overflow-y: auto;
+      max-height: 360px; overflow-y: auto; border-radius: 0 0 8px 8px;
       white-space: pre-wrap; word-break: break-word;
     }
-    .output-wrap { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 24px; }
-    .output-wrap .output-tabs { border-radius: 8px 8px 0 0; border-bottom: 1px solid var(--border); }
     .output-panel.idle { color: var(--text-3); font-style: italic; white-space: normal; }
-    .output-panel.err  { border-top: 1px solid rgba(255,85,85,.3); color: var(--red); }
-
-    /* Message cards */
-    .msg-cards { padding: 14px; }
-    .msg-card {
-      border: 1px solid var(--border); border-radius: 8px;
-      margin-bottom: 10px; overflow: hidden;
-    }
+    .output-panel.err  { color: var(--red); }
+    .msg-cards { padding: 10px; }
+    .msg-card { border: 1px solid var(--border); border-radius: 7px; margin-bottom: 8px; overflow: hidden; }
     .msg-card:last-child { margin-bottom: 0; }
-    .msg-card-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 7px 12px; background: var(--surface-2);
-      border-bottom: 1px solid var(--border);
-      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px;
+    .msg-card-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 5px 11px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
     }
-    .msg-card-header .tag-user { color: var(--blue); }
-    .msg-card-header .tag-resp { color: var(--accent); }
-    .msg-card-score { color: var(--text-3); font-weight: 400; font-family: var(--mono); }
-    .msg-prompt, .msg-response {
-      padding: 9px 12px; font-size: 13px; line-height: 1.55; color: var(--text-2);
-    }
-    .msg-prompt { color: var(--text); background: transparent; }
-    .msg-divider { height: 1px; background: var(--border); margin: 0; }
-
-    /* Token savings */
+    .msg-card-hdr .turn { color: var(--blue); }
+    .msg-card-hdr .score { color: var(--text-3); font-weight: 400; font-family: var(--mono); }
+    .msg-prompt  { padding: 8px 11px; font-size: 13px; color: var(--text); line-height: 1.5; font-family: var(--font); }
+    .msg-divider { height: 1px; background: var(--border); }
+    .msg-resp    { padding: 8px 11px; font-size: 13px; color: var(--text-2); line-height: 1.5; font-family: var(--font); }
     .token-savings {
-      margin-top: 16px; padding: 16px 18px;
-      background: rgba(0,255,136,.04);
-      border: 1px solid rgba(0,255,136,.12);
-      border-radius: 8px;
+      margin-top: 14px; padding: 14px 16px;
+      background: rgba(0,255,136,.04); border: 1px solid rgba(0,255,136,.12); border-radius: 8px;
     }
-    .ts-title { font-size: 12px; font-weight: 700; color: var(--accent); margin: 0 0 14px; }
-    .ts-row { margin-bottom: 10px; }
-    .ts-row-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
-    .ts-track { height: 20px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+    .ts-title { font-size: 12px; font-weight: 700; color: var(--accent); margin: 0 0 12px; }
+    .ts-row { margin-bottom: 8px; }
+    .ts-lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-bottom: 3px; }
+    .ts-track { height: 18px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
     .ts-fill {
       height: 100%; background: var(--accent); border-radius: 4px;
       display: flex; align-items: center; justify-content: flex-end;
-      padding-right: 7px; font-size: 10px; font-weight: 700; color: #0c0c0c;
+      padding-right: 6px; font-size: 10px; font-weight: 700; color: #0c0c0c;
       transition: width .6s ease;
     }
-    .ts-full-bar { height: 100%; background: var(--border-2); border-radius: 4px; }
-    .ts-savings { font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 10px; }
+    .ts-savings { font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 8px; }
+
+    /* Recall stats panel */
+    .cold-banner {
+      display: flex; align-items: flex-start; gap: 9px; margin-bottom: 12px;
+      background: rgba(255,204,68,.08); border: 1px solid rgba(255,204,68,.25);
+      border-left: 3px solid var(--yellow); border-radius: 7px; padding: 10px 13px;
+      font-size: 12.5px; color: rgba(255,204,68,.85); line-height: 1.5;
+    }
+    .cold-banner .cold-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+    .recall-stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;
+    }
+    .rs-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 7px; padding: 10px 12px; text-align: center;
+    }
+    .rs-val {
+      font-size: 22px; font-weight: 800; color: var(--text); font-family: var(--mono);
+      line-height: 1.2; margin-bottom: 3px;
+    }
+    .rs-strategy { font-size: 13px !important; text-transform: uppercase; letter-spacing: .04em; }
+    .rs-key { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .7px; }
+    .msg-resp-pending { font-style: italic; color: var(--text-3) !important; }
   </style>
 </head>
 <body>
@@ -235,7 +210,8 @@
     <a href="https://github.com/avik22835/graphmem" class="nav-link" target="_blank" rel="noopener">GitHub ↗</a>
     <div class="nav-right">
       <div class="nav-divider"></div>
-      <a href="/login" class="nav-link" id="navLogin">Log in</a>
+      <span id="navUser" style="font-size:13px;color:var(--text-2)"></span>
+      <a href="/login" id="navLogin" class="nav-link">Log in</a>
       <a href="/signup" class="btn btn-ghost btn-sm">Get API Key</a>
     </div>
   </div>
@@ -244,32 +220,26 @@
 <div class="pg-wrap">
   <aside class="pg-sidebar">
     <div class="pg-sidebar-top">
-      <div class="pg-field-label">API Key</div>
-      <input class="pg-api-key" id="apiKeyInput" type="password"
-             placeholder="gm_sk_… — paste your key" autocomplete="off"/>
-      <div class="pg-field-label" style="margin-top:10px">Demo Conversation</div>
+      <div class="pg-field-label">Demo Conversation</div>
       <select class="pg-conv-select" id="convSelect" onchange="switchConv(this.value)">
         <option value="conv2">SaaS App Build (auth → payments → backend)</option>
         <option value="conv1">Multi-topic Chat (cooking → travel → coding)</option>
       </select>
-      <a href="/signup" class="pg-get-key">→ Get your free API key</a>
     </div>
     <div class="pg-method-list" id="methodList"></div>
   </aside>
 
   <main class="pg-main" id="methodPanel">
-    <div style="color:var(--text-3);padding-top:40px;font-size:14px">Loading demo data…</div>
+    <div style="color:var(--text-3);padding-top:40px;font-size:14px">Select a method from the sidebar →</div>
   </main>
 </div>
 
 <script src="/static/js/auth.js"></script>
 <script>
-/* ── Config ──────────────────────────────────────────────────────── */
 const CONF = {
-  conv1: { id: '0eaf5486-63c6-4f5c-a4d8-5c761f1fa91d', label: 'Multi-topic Chat' },
-  conv2: { id: '0fd00ae3-5ffe-48f9-a3dc-6ac2e6badb16', label: 'SaaS App Build'   },
+  conv1: { id: '0eaf5486-63c6-4f5c-a4d8-5c761f1fa91d' },
+  conv2: { id: '0fd00ae3-5ffe-48f9-a3dc-6ac2e6badb16' },
 };
-
 const state = {
   conv: 'conv2', method: 'memory.recall', outputTab: 'cards',
   cache: {
@@ -278,41 +248,55 @@ const state = {
   }
 };
 
-/* ── Helpers ─────────────────────────────────────────────────────── */
-const apiKey  = () => document.getElementById('apiKeyInput').value.trim();
-const convId  = () => CONF[state.conv].id;
-const cache   = () => state.cache[state.conv];
-const hasKey  = () => !!apiKey();
+const convId = () => CONF[state.conv].id;
+const cache  = () => state.cache[state.conv];
+
+function getApiKey() {
+  return document.getElementById('p_api_key')?.value?.trim()
+      || localStorage.getItem('gm_api_key') || '';
+}
+function saveApiKey(v) { if (v) localStorage.setItem('gm_api_key', v); }
 
 async function apiFetch(path, opts={}) {
-  const key = apiKey();
-  if (!key && path !== '/health') throw new Error('No API key — paste your key in the sidebar or get one free at /signup');
-  const h = { 'Content-Type': 'application/json' };
-  if (key) h['X-API-Key'] = key;
-  const r = await fetch(path, { ...opts, headers: { ...h, ...(opts.headers||{}) } });
+  const key = getApiKey();
+  if (!key) throw new Error('Paste your API key in the field above');
+  const r = await fetch(path, {
+    ...opts,
+    headers: { 'X-API-Key': key, 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error(`${r.status} — ${t}`); }
+  return r;
+}
+
+async function jwtFetch(path, opts={}) {
+  const jwt = localStorage.getItem('gm_id_token');
+  if (!jwt) throw new Error('Not logged in — log in at /login first, then come back here');
+  const r = await fetch(path, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
   if (!r.ok) { const t = await r.text(); throw new Error(`${r.status} — ${t}`); }
   return r;
 }
 
 function hl(code) {
   let s = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  s = s.replace(/"([^"\n]*)"/g,  '<span class="cs">"$1"</span>');
-  s = s.replace(/'([^'\n]*)'/g,  "<span class=\"cs\">'$1'</span>");
-  s = s.replace(/(#[^\n]*)/g,    '<span class="cc">$1</span>');
-  s = s.replace(/\b(import|from|await|async|def|return|for|in|if|else|True|False|None|print|len|not)\b/g,
-                '<span class="ck">$1</span>');
+  s = s.replace(/"([^"\n]*)"/g, '<span class="cs">"$1"</span>');
+  s = s.replace(/'([^'\n]*)'/g, "<span class=\"cs\">'$1'</span>");
+  s = s.replace(/(#[^\n]*)/g,   '<span class="cc">$1</span>');
+  s = s.replace(/\b(import|from|await|async|def|return|for|in|if|else|True|False|None|print|len|not)\b/g, '<span class="ck">$1</span>');
   s = s.replace(/\b(\d+\.?\d*)\b/g, '<span class="cn">$1</span>');
   return s;
 }
-function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ── Methods ─────────────────────────────────────────────────────── */
 const METHODS = [
-  /* ── MEMORY ──────────────────────────────────────────── */
+  // ── MEMORY ────────────────────────────────────────────────────────
   {
     id:'memory.recall', ns:'memory', label:'recall', badge:'POST', http:'POST /memory/recall',
-    desc:'Retrieves the k most semantically relevant memory nodes for a query using two-layer retrieval: pgvector HNSW cosine search (Layer 1) re-ranked by Neptune graph neighbourhood edges (Layer 2).',
-    usecase:'Message 51 arrives in your chatbot. Instead of sending all 50 prior exchanges — often thousands of tokens — to your LLM, call recall() to fetch only the most relevant nodes. Focused context, fraction of the cost.',
+    desc:'Retrieves the k most semantically relevant memory nodes for a query. Two-layer retrieval: pgvector HNSW cosine search (Layer 1) re-ranked by Neptune graph neighbourhood edges (Layer 2).',
+    usecase:'Message 51 arrives in your chatbot. Instead of sending all 50 prior exchanges to the LLM, call recall() to fetch only the most relevant nodes. Focused context, fraction of the cost.',
     params:[
       {id:'query',label:'Query',type:'text',
        defConv1:'What cooking techniques did we discuss?',
@@ -330,95 +314,74 @@ result = gm.memory.recall(
     k=${p.k},
     strategy="semantic",
 )
-
-# Feed to your LLM instead of full history
-llm_context = result.context
 print(f"GraphMem: {result.token_count} tokens")`,
     execute: async (cid,p) => {
       const sR = await apiFetch(`/conversations/${cid}/stats`);
       const stats = await sR.json();
-      const r = await apiFetch('/memory/recall',{
-        method:'POST',
-        body:JSON.stringify({conversation_id:cid,query:p.query,k:parseInt(p.k),strategy:'semantic'})
-      });
-      const d = await r.json();
-      d._fullEst = (stats.node_count||50)*150;
-      return d;
-    },
-    extra:'recall_view'
+      const r = await apiFetch('/memory/recall',{method:'POST',
+        body:JSON.stringify({conversation_id:cid,query:p.query,k:parseInt(p.k),strategy:'semantic'})});
+      const d = await r.json(); d._nodeCount=stats.node_count||0; d._fullEst=(stats.node_count||50)*150; return d;
+    }, extra:'recall_view'
   },
   {
     id:'memory.add_prompt', ns:'memory', label:'add_prompt', badge:'POST', http:'POST /memory/prompt',
-    desc:'Logs a user prompt as a new pending memory node. Returns a memory_id — store it and pass to add_response() after your LLM replies to complete the node.',
-    usecase:'Your agent receives a user message. Before forwarding it to your LLM, log it with add_prompt() so every turn is captured in the memory graph. Nothing is ever lost.',
-    params:[
-      {id:'content',label:'Content',type:'text',
-       defConv1:'How do I make crème brûlée at home?',
-       defConv2:'How do I rotate refresh tokens safely?'}
-    ],
+    desc:'Logs a user prompt as a new pending memory node. Returns a memory_id — pass it to add_response() after your LLM replies.',
+    usecase:'Your agent receives a user message. Log it with add_prompt() before forwarding to the LLM so every turn is captured. Nothing is ever lost.',
+    params:[{id:'content',label:'Content',type:'text',
+      defConv1:'How do I make crème brûlée at home?',
+      defConv2:'How do I rotate refresh tokens safely?'}],
     code:(cid,p)=>
 `memory_id = gm.memory.add_prompt(
     conv_id="${cid}",
     content="${p.content}",
 )
-# Save memory_id — pass it to add_response()
 print(f"Node created: {memory_id}")`,
     execute: async (cid,p) => {
-      const r = await apiFetch('/memory/prompt',{
-        method:'POST', body:JSON.stringify({conversation_id:cid,content:p.content})
-      });
+      const r = await apiFetch('/memory/prompt',{method:'POST',
+        body:JSON.stringify({conversation_id:cid,content:p.content})});
       return r.json();
     }
   },
   {
     id:'memory.add_response', ns:'memory', label:'add_response', badge:'POST', http:'POST /memory/{memory_id}/response',
-    desc:"Attaches your LLM's response to a pending node, marking it complete. Triggers the async pipeline: embedding computation → Neptune edge creation → topic recompute queue.",
-    usecase:'Your LLM has replied. Call add_response() to seal the node. The node worker queues embedding computation immediately — this turn becomes searchable via recall() within seconds.',
-    params:[
-      {id:'content',label:'Response',type:'text',
-       defConv1:'Crème brûlée requires a kitchen torch for the caramelized sugar top. Use heavy cream, not milk.',
-       defConv2:'On each use of the refresh token, issue a brand new one and invalidate the old one (rotation pattern).'}
-    ],
+    desc:"Attaches the LLM's response to a pending node, marking it complete. Triggers the async pipeline: embedding → Neptune edges → topic recompute.",
+    usecase:'Your LLM has replied. Call add_response() to seal the node — it becomes searchable via recall() within seconds.',
+    params:[{id:'content',label:'Response',type:'text',
+      defConv1:'Crème brûlée requires a kitchen torch for the caramelized sugar top.',
+      defConv2:'On each refresh token use, issue a brand new one and invalidate the old (rotation pattern).'}],
     code:(cid,p)=>
-`# memory_id came from add_prompt()
-gm.memory.add_response(
+`gm.memory.add_response(
     memory_id=memory_id,
     conv_id="${cid}",
     content=llm_response,
-)
-# Node is now complete — embedding + graph edges queued`,
+)`,
     execute: async (cid,p) => {
-      const pR = await apiFetch('/memory/prompt',{
-        method:'POST', body:JSON.stringify({conversation_id:cid,content:'Demo prompt for add_response example'})
-      });
+      const pR = await apiFetch('/memory/prompt',{method:'POST',
+        body:JSON.stringify({conversation_id:cid,content:'Demo prompt for add_response'})});
       const {memory_id} = await pR.json();
-      const r = await apiFetch(`/memory/${memory_id}/response`,{
-        method:'POST', body:JSON.stringify({conversation_id:cid,content:p.content})
-      });
-      return {memory_id, ...(await r.json())};
+      const r = await apiFetch(`/memory/${memory_id}/response`,{method:'POST',
+        body:JSON.stringify({conversation_id:cid,content:p.content})});
+      return {memory_id,...(await r.json())};
     }
   },
   {
     id:'memory.get', ns:'memory', label:'get', badge:'GET', http:'GET /memory/{memory_id}',
-    desc:'Fetches a single memory node by ID — prompt, response, status, timestamps, and metadata.',
-    usecase:"You stored a memory_id alongside a session. Retrieve it later to inspect what was logged, verify embedding status (status: complete means it's in the graph), or display the original exchange to the user.",
+    desc:'Fetches a single memory node by ID — prompt, response, status, timestamps, metadata.',
+    usecase:"Retrieve a stored memory_id to inspect what was logged, verify embedding status (status: complete = in graph), or display the original exchange.",
     params:[{id:'memory_id',label:'memory_id',type:'cache_node'}],
     code:(cid,p,c)=>
 `node = gm.memory.get(memory_id="${c.nodeId||'<memory_id>'}")
-
 print(node["prompt"])
-print(node["response"])
-print(node["status"])   # "complete" once embedded and in graph`,
+print(node["status"])   # "complete" once embedded`,
     execute: async (cid,p,c) => {
-      if (!c.nodeId) throw new Error('No nodes cached. Wait for embedding to complete.');
-      const r = await apiFetch(`/memory/${c.nodeId}`);
-      return r.json();
+      if (!c.nodeId) throw new Error('No nodes cached — paste an API key and run recall() first.');
+      return (await apiFetch(`/memory/${c.nodeId}`)).json();
     }
   },
   {
     id:'memory.get_neighbours', ns:'memory', label:'get_neighbours', badge:'GET', http:'GET /memory/{memory_id}/neighbours',
-    desc:'Returns memory nodes semantically adjacent to a given node in the Neptune cosine similarity graph, ranked by edge weight.',
-    usecase:'"Show me more context around this message." get_neighbours() follows Neptune graph edges — surfaces all semantically related exchanges regardless of when they occurred.',
+    desc:'Returns memory nodes semantically adjacent in the Neptune similarity graph, ranked by edge weight.',
+    usecase:'"Show me more context around this message." Follows Neptune graph edges — surfaces related exchanges regardless of when they occurred.',
     params:[
       {id:'memory_id',label:'memory_id',type:'cache_node'},
       {id:'threshold',label:'Threshold',type:'number',def:0.7}
@@ -427,260 +390,171 @@ print(node["status"])   # "complete" once embedded and in graph`,
 `neighbours = gm.memory.get_neighbours(
     memory_id="${c.nodeId||'<memory_id>'}",
     threshold=${p.threshold},
-    limit=10,
-    order="relevance",
 )
 for n in neighbours:
     print(f"[{n['edge_weight']:.2f}] {n['prompt'][:80]}")`,
     execute: async (cid,p,c) => {
-      if (!c.nodeId) throw new Error('No nodes cached. Wait for embedding to complete.');
-      const r = await apiFetch(`/memory/${c.nodeId}/neighbours?threshold=${p.threshold}&limit=10&order=relevance`);
-      return r.json();
+      if (!c.nodeId) throw new Error('No nodes cached — paste an API key and run recall() first.');
+      return (await apiFetch(`/memory/${c.nodeId}/neighbours?threshold=${p.threshold}&limit=10&order=relevance`)).json();
     }
   },
   {
     id:'memory.add_batch', ns:'memory', label:'add_batch', badge:'POST', http:'POST /memory/batch',
-    desc:'Bulk-inserts up to 100 complete prompt+response pairs in one request. All items are marked complete immediately and queued for embedding.',
-    usecase:"Onboarding a user who already has chat history in your existing system. Instead of 200 individual API calls, batch-import their entire history and let GraphMem build the semantic graph asynchronously.",
+    desc:'Bulk-inserts up to 100 complete prompt+response pairs in one request. All items queued for embedding immediately.',
+    usecase:"Onboarding a user with existing chat history. Batch-import their full history in one call instead of 200 individual requests.",
     params:[],
     code:(cid)=>
 `memory_ids = gm.memory.add_batch(items=[
-    {
-        "conversation_id": "${cid}",
-        "prompt": "What's the difference between stateless and stateful auth?",
-        "response": "Stateless auth (JWT) stores session in the token — no server-side state.",
-    },
-    {
-        "conversation_id": "${cid}",
-        "prompt": "Which is better for microservices?",
-        "response": "Stateless JWT scales horizontally without a shared session store.",
-    },
+    {"conversation_id":"${cid}","prompt":"What is stateless auth?","response":"JWT — no server-side session."},
+    {"conversation_id":"${cid}","prompt":"Better for microservices?","response":"Yes, scales horizontally."},
 ])
 print(f"Imported {len(memory_ids)} nodes")`,
     execute: async (cid) => {
-      const r = await apiFetch('/memory/batch',{
-        method:'POST',
-        body:JSON.stringify({items:[
-          {conversation_id:cid,prompt:"What's the difference between stateless and stateful auth?",response:"Stateless auth (JWT) stores session in the token — no server-side state needed."},
-          {conversation_id:cid,prompt:"Which is better for microservices?",response:"Stateless JWT scales horizontally without a shared session store."},
-        ]})
-      });
+      const r = await apiFetch('/memory/batch',{method:'POST',body:JSON.stringify({items:[
+        {conversation_id:cid,prompt:"What's the difference between stateless and stateful auth?",response:"Stateless auth (JWT) stores session in the token — no server-side state needed."},
+        {conversation_id:cid,prompt:"Which is better for microservices?",response:"Stateless JWT scales horizontally without a shared session store."},
+      ]})});
       return r.json();
     }
   },
-
-  /* ── CONVERSATIONS ────────────────────────────────────── */
+  // ── CONVERSATIONS ──────────────────────────────────────────────────
   {
     id:'conversations.create', ns:'conversations', label:'create', badge:'POST', http:'POST /conversations',
-    desc:'Creates a new empty conversation context and returns a conversation_id. Store this ID tied to your user or session.',
-    usecase:'A new user signs up or starts a fresh chat. Call create() to provision an isolated memory context for them — all future add_prompt / recall calls reference this ID.',
+    desc:'Creates a new empty conversation context and returns a conversation_id.',
+    usecase:'A new user signs up or starts a fresh chat. Call create() to provision an isolated memory context tied to their session.',
     params:[],
     code:()=>
 `conv_id = gm.conversations.create()
-
-# Persist tied to your user session
-db.save(user_id=current_user.id, conv_id=conv_id)
-print(f"Ready: {conv_id}")`,
-    execute: async () => {
-      const r = await apiFetch('/conversations',{method:'POST',body:JSON.stringify({})});
-      return r.json();
-    }
+db.save(user_id=current_user.id, conv_id=conv_id)`,
+    execute: async () => (await apiFetch('/conversations',{method:'POST',body:JSON.stringify({})})).json()
   },
   {
     id:'conversations.list', ns:'conversations', label:'list', badge:'GET', http:'GET /conversations',
-    desc:'Lists all conversations for your API key, ordered newest first, with node count and last topic recompute timestamp.',
-    usecase:'Admin dashboard or observability view — see all active agent sessions, how many memory nodes each has accumulated, and when topics were last clustered.',
+    desc:'Lists all conversations for your API key, ordered newest first.',
+    usecase:'Admin dashboard — see all active agent sessions, node counts, and topic timestamps.',
     params:[],
     code:()=>
 `convs = gm.conversations.list()
-
 for c in convs:
     print(f"{c['conversation_id'][:8]}…  nodes={c['node_count']}")`,
-    execute: async () => {
-      const r = await apiFetch('/conversations');
-      return r.json();
-    }
+    execute: async () => (await apiFetch('/conversations')).json()
   },
   {
     id:'conversations.get_stats', ns:'conversations', label:'get_stats', badge:'GET', http:'GET /conversations/{conv_id}/stats',
-    desc:'Returns conversation health: node count, topic count, dirty topics pending recompute, first/last activity timestamps, and embedding coverage.',
-    usecase:'Before choosing a retrieval strategy, check conversation size. If node_count > 20, use recall(). For a fresh 3-message conversation, send the full history directly — recall adds latency for tiny contexts.',
+    desc:'Returns node count, topic count, dirty topics, first/last activity, and embedding coverage.',
+    usecase:'Check conversation size before choosing retrieval strategy — use recall() if node_count > 20, else send full history.',
     params:[],
     code:(cid)=>
 `stats = gm.conversations.get_stats(conv_id="${cid}")
-
-print(f"Nodes:  {stats['node_count']}")
-print(f"Topics: {stats['topic_count']}")
-
 if stats["node_count"] > 20:
-    context = gm.memory.recall(conv_id, query=user_query, k=5)
+    context = gm.memory.recall(conv_id, query=query, k=5)
 else:
     context = gm.conversations.export(conv_id)`,
-    execute: async (cid) => {
-      const r = await apiFetch(`/conversations/${cid}/stats`);
-      return r.json();
-    }
+    execute: async (cid) => (await apiFetch(`/conversations/${cid}/stats`)).json()
   },
   {
     id:'conversations.export', ns:'conversations', label:'export', badge:'GET', http:'GET /conversations/{conv_id}/export',
-    desc:'Exports all memory nodes ordered by index — full prompt, response, timestamps, and metadata for every turn.',
-    usecase:'Build a fine-tuning dataset from your agent sessions, generate a readable transcript for the user, or run offline analytics on topic distribution.',
+    desc:'Exports all memory nodes ordered by index — full prompt, response, timestamps, and metadata.',
+    usecase:'Build a fine-tuning dataset, generate a readable transcript, or run analytics on topic distribution.',
     params:[],
     code:(cid)=>
 `nodes = gm.conversations.export(conv_id="${cid}")
-print(f"Exported {len(nodes)} nodes")
-
-dataset = [
-    {"prompt": n["prompt"], "completion": n["response"]}
-    for n in nodes
-]`,
-    execute: async (cid) => {
-      const r = await apiFetch(`/conversations/${cid}/export`);
-      return r.json();
-    }
+dataset = [{"prompt":n["prompt"],"completion":n["response"]} for n in nodes]`,
+    execute: async (cid) => (await apiFetch(`/conversations/${cid}/export`)).json()
   },
   {
     id:'conversations.delete', ns:'conversations', label:'delete', badge:'DELETE', http:'DELETE /conversations/{conv_id}',
-    desc:"Permanently deletes a conversation and all its memory nodes, topics, and Neptune graph edges. Irreversible. This demo creates a temp conversation then deletes it.",
-    usecase:'A user deletes their account or a session expires. Clean up all associated memory — GDPR compliance, storage hygiene, or retiring expired agent sessions.',
+    desc:'Permanently deletes a conversation and all its nodes, topics, and Neptune graph edges. Demo creates a temp conversation then deletes it.',
+    usecase:'User deletes their account or session expires — GDPR cleanup, storage hygiene.',
     params:[],
     code:()=>
-`# Hard-delete a conversation and all its graph data
-gm.conversations.delete(conv_id=expired_session_conv_id)`,
+`gm.conversations.delete(conv_id=expired_session_conv_id)`,
     execute: async () => {
-      const cr = await apiFetch('/conversations',{method:'POST',body:JSON.stringify({})});
-      const {conversation_id} = await cr.json();
+      const {conversation_id} = await (await apiFetch('/conversations',{method:'POST',body:'{}'})).json();
       await apiFetch(`/conversations/${conversation_id}`,{method:'DELETE'});
-      return {deleted:conversation_id, status:'ok'};
+      return {deleted:conversation_id,status:'ok'};
     }
   },
-
-  /* ── TOPICS ───────────────────────────────────────────── */
+  // ── TOPICS ─────────────────────────────────────────────────────────
   {
     id:'topics.list_all', ns:'topics', label:'list_all', badge:'GET', http:'GET /topics?conversation_id=',
-    desc:"Returns all topic clusters discovered via Louvain community detection — labels, descriptions, coherence scores, member message IDs, and status (active / dormant / resolved).",
-    usecase:'Build a "conversation map" feature. Show users exactly what their AI assistant has covered, with message counts per cluster. Multi-topic conversations become instantly navigable.',
+    desc:'Returns all Louvain-detected topic clusters — labels, descriptions, coherence scores, message IDs, status.',
+    usecase:'Build a "conversation map" feature. Show users what their AI covered, with message counts per cluster.',
     params:[],
     code:(cid)=>
 `topics = gm.topics.list_all(conv_id="${cid}")
-
 for t in topics:
-    print(f"[{t['status']}] {t['label']}")
-    print(f"  {len(t['message_ids'])} messages, coherence={t['coherence']:.2f}")`,
-    execute: async (cid) => {
-      const r = await apiFetch(`/topics?conversation_id=${cid}`);
-      return r.json();
-    }
+    print(f"[{t['status']}] {t['label']} — {len(t['message_ids'])} msgs")`,
+    execute: async (cid) => (await apiFetch(`/topics?conversation_id=${cid}`)).json()
   },
   {
     id:'topics.get_current', ns:'topics', label:'get_current', badge:'GET', http:'GET /topics/current?conversation_id=',
-    desc:"Identifies the currently active topic based on recent messages' embedding centroid proximity. Supports centroid, hybrid, and LLM detection modes.",
-    usecase:'Your agent receives a message. Before calling your LLM, check the current topic to pick the right system prompt or route to a specialist sub-agent.',
-    params:[
-      {id:'mode',label:'Mode',type:'select',options:['centroid','hybrid'],def:'centroid'}
-    ],
+    desc:"Identifies the currently active topic by embedding centroid proximity. Modes: centroid, hybrid, llm.",
+    usecase:'Check the current topic before calling your LLM to route to a specialist sub-agent or pick the right system prompt.',
+    params:[{id:'mode',label:'Mode',type:'select',options:['centroid','hybrid'],def:'centroid'}],
     code:(cid,p)=>
-`current = gm.topics.get_current(
-    conv_id="${cid}",
-    mode="${p.mode}",
-)
-
+`current = gm.topics.get_current(conv_id="${cid}", mode="${p.mode}")
 if current["label"] == "payments":
-    agent = StripeExpertAgent()
-elif current["label"] == "authentication":
-    agent = AuthExpertAgent()`,
-    execute: async (cid,p) => {
-      const r = await apiFetch(`/topics/current?conversation_id=${cid}&mode=${p.mode}`);
-      return r.json();
-    }
+    agent = StripeExpertAgent()`,
+    execute: async (cid,p) => (await apiFetch(`/topics/current?conversation_id=${cid}&mode=${p.mode}`)).json()
   },
   {
     id:'topics.retrieve', ns:'topics', label:'retrieve', badge:'POST', http:'POST /topics/retrieve',
-    desc:'Two-stage retrieval: first identifies the most relevant topic cluster for the query, then retrieves the best nodes from within that cluster. Higher precision than flat recall().',
-    usecase:'The user asks about Stripe. retrieve() first finds the "payments" topic cluster, then pulls the most relevant nodes from within it — zero noise from unrelated topics.',
+    desc:'Two-stage retrieval: finds the most relevant topic cluster, then retrieves the best nodes within it.',
+    usecase:'User asks about Stripe. retrieve() finds the "payments" cluster, then pulls relevant nodes from it — zero noise from other topics.',
     params:[
-      {id:'query',label:'Query',type:'text',
-       defConv1:'What travel tips did we cover?',
-       defConv2:'Stripe webhook signature verification'},
+      {id:'query',label:'Query',type:'text',defConv1:'What travel tips did we cover?',defConv2:'Stripe webhook signature verification'},
       {id:'top_n',label:'top_n',type:'number',def:3}
     ],
     code:(cid,p)=>
 `result = gm.topics.retrieve(
-    conv_id="${cid}",
-    query="${p.query}",
-    top_n=${p.top_n},
+    conv_id="${cid}", query="${p.query}", top_n=${p.top_n},
 )
-
-print(f"Topic matched: {result['matched_topic']['label']}")
-print(f"Nodes returned: {len(result['nodes'])}")`,
-    execute: async (cid,p) => {
-      const r = await apiFetch('/topics/retrieve',{
-        method:'POST',
-        body:JSON.stringify({conversation_id:cid,query:p.query,top_n:parseInt(p.top_n)})
-      });
-      return r.json();
-    }
+print(f"Topic: {result['matched_topic']['label']}")`,
+    execute: async (cid,p) => (await apiFetch('/topics/retrieve',{method:'POST',
+      body:JSON.stringify({conversation_id:cid,query:p.query,top_n:parseInt(p.top_n)})})).json()
   },
   {
-    id:'topics.relevance', ns:'topics', label:'relevance', badge:'GET', http:'GET /topics/relevance?conversation_id=&query=',
-    desc:'Scores every topic cluster against a query and returns them ranked by cosine similarity to their centroids.',
-    usecase:'Before choosing a retrieval path, score all topics. Route to a specialized path for high-scoring topics (>0.8) or fall back to broad recall() for low-confidence queries.',
-    params:[
-      {id:'query',label:'Query',type:'text',
-       defConv1:'cooking and French cuisine',
-       defConv2:'React and frontend state management'}
-    ],
+    id:'topics.relevance', ns:'topics', label:'relevance', badge:'GET', http:'GET /topics/relevance',
+    desc:'Scores every topic cluster against a query, ranked by cosine similarity to centroids.',
+    usecase:'Score all topics before choosing retrieval — route high-scoring (>0.8) to specialist paths, else broad recall().',
+    params:[{id:'query',label:'Query',type:'text',defConv1:'cooking and French cuisine',defConv2:'React and frontend state management'}],
     code:(cid,p)=>
-`scores = gm.topics.relevance(
-    conv_id="${cid}",
-    query="${p.query}",
-    top_n=5,
-)
+`scores = gm.topics.relevance(conv_id="${cid}", query="${p.query}", top_n=5)
 for s in scores:
     print(f"{s['label']}: {s['score']:.3f}")`,
-    execute: async (cid,p) => {
-      const r = await apiFetch(`/topics/relevance?conversation_id=${cid}&query=${encodeURIComponent(p.query)}&top_n=5`);
-      return r.json();
-    }
+    execute: async (cid,p) => (await apiFetch(`/topics/relevance?conversation_id=${cid}&query=${encodeURIComponent(p.query)}&top_n=5`)).json()
   },
   {
     id:'topics.get_info', ns:'topics', label:'get_info', badge:'GET', http:'GET /topics/{topic_id}',
-    desc:"Returns full metadata for a topic cluster: label, description, coherence, sub-themes, message IDs, centroid vector norm, and status.",
-    usecase:"Inspect a specific cluster after list_all() returns its ID. Use the description and sub-themes to decide whether to surface this topic's summary to the user.",
+    desc:'Full topic metadata: label, description, coherence, sub-themes, message IDs, status.',
+    usecase:"Inspect a cluster after list_all(). Use description and sub-themes to decide whether to surface the summary to the user.",
     params:[{id:'topic_id',label:'topic_id',type:'cache_topic'}],
     code:(cid,p,c)=>
 `topic = gm.topics.get_info(topic_id="${c.topicId||'<topic_id>'}")
-
-print(f"Label:       {topic['label']}")
-print(f"Description: {topic['description']}")
-print(f"Coherence:   {topic['coherence']:.2f}")`,
+print(f"{topic['label']} — coherence={topic['coherence']:.2f}")`,
     execute: async (cid,p,c) => {
-      if (!c.topicId) throw new Error('No topics yet — wait ~30s for topic worker to process.');
-      const r = await apiFetch(`/topics/${c.topicId}`);
-      return r.json();
+      if (!c.topicId) throw new Error('No topics yet — paste an API key and run list_all() first.');
+      return (await apiFetch(`/topics/${c.topicId}`)).json();
     }
   },
   {
     id:'topics.get_summary', ns:'topics', label:'get_summary', badge:'GET', http:'GET /topics/{topic_id}/summary',
-    desc:'Returns an LLM-generated natural-language summary of everything discussed within a topic cluster. Condensed long-term memory in paragraph form.',
-    usecase:"A returning user picks up from last week. Instead of replaying 30 messages about authentication, inject the auth topic's summary as \"past context\" in your system prompt.",
+    desc:'LLM-generated natural-language summary of everything discussed in a topic cluster.',
+    usecase:"Returning user picks up from last week. Inject the auth topic summary as system prompt 'past context' instead of replaying 30 messages.",
     params:[{id:'topic_id',label:'topic_id',type:'cache_topic'}],
     code:(cid,p,c)=>
 `summary = gm.topics.get_summary(topic_id="${c.topicId||'<topic_id>'}")
-
-system_prompt = f"""You are a helpful assistant.
-Past context: {summary['summary']}
-"""`,
+system_prompt = f"Past context: {summary['summary']}"`,
     execute: async (cid,p,c) => {
-      if (!c.topicId) throw new Error('No topics yet — wait ~30s for topic worker to process.');
-      const r = await apiFetch(`/topics/${c.topicId}/summary`);
-      return r.json();
+      if (!c.topicId) throw new Error('No topics yet — paste an API key and run list_all() first.');
+      return (await apiFetch(`/topics/${c.topicId}/summary`)).json();
     }
   },
   {
     id:'topics.get_messages', ns:'topics', label:'get_messages', badge:'GET', http:'GET /topics/{topic_id}/messages',
-    desc:'Retrieves all memory nodes belonging to a specific topic cluster, optionally ranked by query relevance within the cluster.',
-    usecase:'"Go back to what we discussed about payments." Use list_all() to find the payments topic_id, then get_messages() to pull every node from that cluster.',
+    desc:'Retrieves all memory nodes in a topic cluster, optionally ranked by query relevance.',
+    usecase:'"Go back to payments." Use list_all() to find the topic_id, then get_messages() to pull every node from that cluster.',
     params:[
       {id:'topic_id',label:'topic_id',type:'cache_topic'},
       {id:'query',label:'Query (opt)',type:'text',defConv1:'',defConv2:'webhook signature'}
@@ -688,103 +562,89 @@ Past context: {summary['summary']}
     code:(cid,p,c)=>
 `result = gm.topics.get_messages(
     topic_id="${c.topicId||'<topic_id>'}",
-    conv_id="${cid}",
-    query="${p.query||''}",
-)
-print(f"{len(result['nodes'])} messages in this topic")`,
+    conv_id="${cid}", query="${p.query||''}",
+)`,
     execute: async (cid,p,c) => {
-      if (!c.topicId) throw new Error('No topics yet — wait ~30s for topic worker to process.');
+      if (!c.topicId) throw new Error('No topics yet — paste an API key and run list_all() first.');
       let url = `/topics/${c.topicId}/messages?conversation_id=${cid}`;
       if (p.query) url += `&query=${encodeURIComponent(p.query)}`;
-      const r = await apiFetch(url);
-      return r.json();
+      return (await apiFetch(url)).json();
     }
   },
   {
     id:'topics.recompute', ns:'topics', label:'recompute', badge:'POST', http:'POST /topics/recompute?conversation_id=',
-    desc:'Forces a full Louvain re-clustering for the conversation. Accepts 202 immediately; clustering runs async.',
-    usecase:'You just bulk-imported 50 historical messages. The existing topic clusters are stale. Call recompute() to re-run clustering and refresh all topic labels and edge weights.',
+    desc:'Forces Louvain re-clustering. Returns 202 immediately — runs async.',
+    usecase:'You just bulk-imported 50 messages. Call recompute() to refresh topic labels, centroids, and edge weights.',
     params:[],
     code:(cid)=>
 `gm.topics.recompute(conv_id="${cid}")
-print("Topic recompute queued — updated in ~10s")`,
-    execute: async (cid) => {
-      const r = await apiFetch(`/topics/recompute?conversation_id=${cid}`,{method:'POST'});
+print("Recompute queued — updated in ~10s")`,
+    execute: async (cid) => (await apiFetch(`/topics/recompute?conversation_id=${cid}`,{method:'POST'})).json()
+  },
+  // ── AUTH ───────────────────────────────────────────────────────────
+  {
+    id:'auth.create_key', ns:'auth', label:'create_key', badge:'POST', http:'POST /auth/keys', jwt:true,
+    desc:'Creates a new API key tied to your account. The full key is returned once only — copy it immediately.',
+    usecase:'After signing up, create your first gm_sk_… key from the dashboard. The playground calls this on your behalf.',
+    params:[{id:'project_name',label:'Project name',type:'text',def:'my-agent',defConv1:'my-agent',defConv2:'saas-app'}],
+    code:()=>
+`# This is called automatically after sign-up
+# You can also create additional keys from /dashboard
+key = gm.auth.create_key(project_name="my-agent")
+print(f"Key: {key['key']}")   # copy now — shown once`,
+    execute: async (cid,p) => {
+      const r = await jwtFetch('/auth/keys',{method:'POST',
+        body:JSON.stringify({project_name:p.project_name||'playground-test'})});
       return r.json();
     }
   },
-
-  /* ── AUTH ─────────────────────────────────────────────── */
   {
-    id:'auth.create_key', ns:'auth', label:'create_key', badge:'POST', jwt:true, http:'POST /auth/keys',
-    desc:'Creates a new API key tied to your Cognito account. Requires a Cognito IdToken (JWT Bearer). The full key is returned once only — store it immediately.',
-    usecase:'A user completes sign-up. After Cognito authentication, call create_key() to provision their gm_sk_… API key — what they\'ll paste into their application code.',
+    id:'auth.list_keys', ns:'auth', label:'list_keys', badge:'GET', http:'GET /auth/keys', jwt:true,
+    desc:'Lists all API keys for your account — prefixes, project names, permissions, last-used.',
+    usecase:'Key management dashboard — see which project each key belongs to and when it was last used.',
     params:[],
     code:()=>
-`key = gm.auth.create_key(
-    jwt_token=cognito_id_token,
-    project_name="my-agent",
-)
-print(f"Key: {key['key']}")`,
-    execute:null
-  },
-  {
-    id:'auth.list_keys', ns:'auth', label:'list_keys', badge:'GET', jwt:true, http:'GET /auth/keys',
-    desc:'Lists all API keys for the authenticated Cognito user. Returns prefixes, project names, permissions, and last-used timestamps.',
-    usecase:'Show your signed-in user a key management dashboard — list their keys, see which project each belongs to, when last used.',
-    params:[],
-    code:()=>
-`keys = gm.auth.list_keys(jwt_token=cognito_id_token)
+`keys = gm.auth.list_keys()
 for k in keys:
     print(f"{k['key_prefix']}…  project={k['project_name']}")`,
-    execute:null
+    execute: async () => (await jwtFetch('/auth/keys')).json()
   },
   {
-    id:'auth.revoke_key', ns:'auth', label:'revoke_key', badge:'DELETE', jwt:true, http:'DELETE /auth/keys/{key_id}',
-    desc:'Deactivates an API key immediately. All subsequent requests using the revoked key receive 401.',
-    usecase:"A key is compromised or a team member leaves. Call revoke_key() to instantly cut off access without deleting any conversation data.",
-    params:[],
+    id:'auth.revoke_key', ns:'auth', label:'revoke_key', badge:'DELETE', http:'DELETE /auth/keys/{key_id}', jwt:true,
+    desc:'Deactivates an API key immediately. All subsequent requests with it receive 401.',
+    usecase:'Key is compromised or a team member leaves — instantly cut off access without touching conversation data.',
+    params:[{id:'key_id',label:'Key ID',type:'text',def:'',defConv1:'',defConv2:''}],
     code:()=>
-`gm.auth.revoke_key(
-    jwt_token=cognito_id_token,
-    key_id="e23fb4be-...",
-)
+`gm.auth.revoke_key(key_id="<key_id from list_keys>")
 print("Key revoked")`,
-    execute:null
+    execute: async (cid,p) => {
+      if (!p.key_id) throw new Error('Paste a key_id from auth.list_keys() output above');
+      await jwtFetch(`/auth/keys/${p.key_id}`,{method:'DELETE'});
+      return {status:'revoked',key_id:p.key_id};
+    }
   },
-
-  /* ── UTILS ────────────────────────────────────────────── */
+  // ── UTILS ──────────────────────────────────────────────────────────
   {
     id:'utils.count_tokens', ns:'utils', label:'count_tokens', badge:'POST', http:'POST /utils/count_tokens',
-    desc:"Counts tokens in any text using the same cl100k_base tokenizer GraphMem uses for token budgeting. Use it to measure exactly how much context you're saving.",
-    usecase:'After recall() returns context, count its tokens and compare to your full history estimate. Quantify the savings before you pass context to your LLM.',
-    params:[
-      {id:'text',label:'Text',type:'textarea',
-       defConv1:'Caramelizing onions requires patience — medium-low heat for 45 minutes, stirring occasionally. Add a pinch of baking soda to accelerate the Maillard reaction without burning.',
-       defConv2:'JWT access tokens should be short-lived (15 minutes). Use httpOnly cookies for refresh tokens to prevent XSS. Rotate refresh tokens on every use to detect theft via reuse detection.'}
-    ],
+    desc:"Counts tokens using cl100k_base — the same tokenizer GraphMem uses for budgeting.",
+    usecase:'After recall() returns context, count its tokens and compare to full history. Quantify savings before passing to LLM.',
+    params:[{id:'text',label:'Text',type:'textarea',
+      defConv1:'Caramelizing onions requires patience — medium-low heat for 45 minutes. Add baking soda to speed up the Maillard reaction.',
+      defConv2:'JWT access tokens should be short-lived (15 min). Use httpOnly cookies for refresh tokens. Rotate on every use.'}],
     code:(cid,p)=>
 `result = gm.utils.count_tokens(text=context_text)
 print(f"Token count: {result['token_count']}")`,
-    execute: async (cid,p) => {
-      const r = await apiFetch('/utils/count_tokens',{
-        method:'POST', body:JSON.stringify({text:p.text})
-      });
-      return r.json();
-    }
+    execute: async (cid,p) => (await apiFetch('/utils/count_tokens',{method:'POST',body:JSON.stringify({text:p.text})})).json()
   },
   {
     id:'utils.health', ns:'utils', label:'health', badge:'GET', http:'GET /health',
-    desc:'API liveness check. No authentication required. Returns {status: "ok"} when the service is up.',
-    usecase:'Add to your uptime monitor. If this returns non-200, alert on-call — GraphMem is down and your agents are losing memory context.',
-    params:[],
+    desc:'Liveness check — no auth required. Returns {status: "ok"}.',
+    usecase:'Add to your uptime monitor. Non-200 means GraphMem is down and your agents are losing context.',
+    params:[], noKey:true,
     code:()=>
 `status = gm.utils.health()
 print(status)  # {"status": "ok"}`,
-    execute: async () => {
-      const r = await fetch('/health');
-      return r.json();
-    }
+    execute: async () => (await fetch('/health')).json()
   }
 ];
 
@@ -796,36 +656,59 @@ function renderSidebar() {
   for (const ns of order) {
     html += `<div class="pg-ns-head">${labels[ns]}</div>`;
     METHODS.filter(m=>m.ns===ns).forEach(m=>{
-      const jt = m.jwt ? ' <span class="jwt-tag">JWT</span>' : '';
+      const jt = m.jwt ? ' <span class="jwt-tag">session</span>' : '';
       html += `<div class="pg-item${m.id===state.method?' active':''}" onclick="selectMethod('${m.id}')">${m.label}${jt}</div>`;
     });
   }
   document.getElementById('methodList').innerHTML = html;
 }
 
-/* ── Panel ────────────────────────────────────────────────────────── */
-function renderParamInput(pr) {
+/* ── Panel rendering ──────────────────────────────────────────────── */
+function renderApiKeyParam() {
+  const v = esc(localStorage.getItem('gm_api_key')||'');
+  return `<div class="param-row">
+    <span class="param-label">API Key</span>
+    <input class="param-input param-api-key" id="p_api_key" type="password"
+           value="${v}" placeholder="gm_sk_… paste your key"
+           oninput="saveApiKey(this.value); refreshCode()"/>
+  </div>`;
+}
+
+function renderJwtParam() {
+  const jwt   = localStorage.getItem('gm_id_token');
+  const email = localStorage.getItem('gm_email') || '';
+  if (jwt) {
+    return `<div class="param-row">
+      <span class="param-label">Auth</span>
+      <div class="param-jwt-row param-jwt-ok">✓ Logged in${email?' as '+esc(email):''} — session JWT will be used</div>
+    </div>`;
+  }
+  return `<div class="param-row">
+    <span class="param-label">Auth</span>
+    <div class="param-jwt-row param-jwt-bad">Not logged in — <a href="/login" style="color:var(--accent)">log in at /login</a> first, then come back</div>
+  </div>`;
+}
+
+function renderParam(pr) {
   const c = cache();
   if (pr.type === 'cache_node') {
-    const v = c.nodeId || '(loading…)';
-    return `<div class="param-row"><span class="param-label">${pr.label}</span><span class="param-id">${escHtml(v)}</span></div>`;
+    return `<div class="param-row"><span class="param-label">${pr.label}</span><span class="param-id">${esc(c.nodeId||'(no nodes yet)')}</span></div>`;
   }
   if (pr.type === 'cache_topic') {
-    const v = c.topicId || '(no topics yet — wait ~30s)';
-    return `<div class="param-row"><span class="param-label">${pr.label}</span><span class="param-id">${escHtml(v)}</span></div>`;
+    return `<div class="param-row"><span class="param-label">${pr.label}</span><span class="param-id">${esc(c.topicId||'(no topics yet — wait ~30s)')}</span></div>`;
   }
   if (pr.type === 'select') {
     const opts = pr.options.map(o=>`<option${o===(pr.def||pr.options[0])?' selected':''}>${o}</option>`).join('');
     return `<div class="param-row"><span class="param-label">${pr.label}</span><select class="param-input" id="p_${pr.id}" onchange="refreshCode()">${opts}</select></div>`;
   }
   if (pr.type === 'textarea') {
-    const v = escHtml(state.conv==='conv1' ? (pr.defConv1||'') : (pr.defConv2||''));
+    const v = esc(state.conv==='conv1'?(pr.defConv1||''):(pr.defConv2||''));
     return `<div class="param-row" style="align-items:flex-start"><span class="param-label" style="padding-top:8px">${pr.label}</span><textarea class="param-input" id="p_${pr.id}" rows="3" style="resize:vertical" oninput="refreshCode()">${v}</textarea></div>`;
   }
   const v = state.conv==='conv1'
-    ? (pr.defConv1!==undefined ? pr.defConv1 : (pr.def!==undefined?pr.def:''))
-    : (pr.defConv2!==undefined ? pr.defConv2 : (pr.def!==undefined?pr.def:''));
-  return `<div class="param-row"><span class="param-label">${pr.label}</span><input class="param-input" id="p_${pr.id}" type="${pr.type||'text'}" value="${escHtml(String(v))}" oninput="refreshCode()"/></div>`;
+    ? (pr.defConv1!==undefined?pr.defConv1:(pr.def!==undefined?pr.def:''))
+    : (pr.defConv2!==undefined?pr.defConv2:(pr.def!==undefined?pr.def:''));
+  return `<div class="param-row"><span class="param-label">${pr.label}</span><input class="param-input" id="p_${pr.id}" type="${pr.type||'text'}" value="${esc(String(v))}" oninput="refreshCode()"/></div>`;
 }
 
 function collectParams(m) {
@@ -833,37 +716,31 @@ function collectParams(m) {
   (m.params||[]).forEach(pr=>{
     if (pr.type==='cache_node')  { p[pr.id]=c.nodeId;  return; }
     if (pr.type==='cache_topic') { p[pr.id]=c.topicId; return; }
-    const el=document.getElementById(`p_${pr.id}`);
-    p[pr.id]=el?el.value:'';
+    const el=document.getElementById(`p_${pr.id}`); p[pr.id]=el?el.value:'';
   });
   return p;
 }
 
 function refreshCode() {
-  const m=METHODS.find(x=>x.id===state.method);
-  if (!m) return;
+  const m=METHODS.find(x=>x.id===state.method); if (!m) return;
   const el=document.getElementById('codeDisplay');
   if (el) el.innerHTML=hl(m.code(convId(),collectParams(m),cache()));
 }
 
 function renderPanel(m) {
-  const jwtBlock = m.jwt ? `<div class="jwt-notice">⚠ <strong>Requires Cognito JWT</strong> — use <code>Authorization: Bearer &lt;IdToken&gt;</code>. Obtain by logging in at <a href="/login" style="color:var(--yellow);">/login</a>. Run is disabled here.</div>` : '';
-  const noKeyBlock = (!m.jwt && m.execute) ? `<div class="nokey-notice" id="noKeyNotice">Enter your API key above to run this method — <a href="/signup">get a free key →</a></div>` : '';
-  const paramsHtml = (m.params||[]).length ? `<div class="params-wrap">${m.params.map(renderParamInput).join('')}</div>` : '';
-  const btnOff = (m.jwt||!m.execute) ? ' disabled' : '';
-
-  const tabsHtml = m.extra === 'recall_view' ? `
-    <div class="output-wrap">
-      <div class="output-tabs">
-        <div class="output-tab active" id="tabCards" onclick="switchOutputTab('cards')">Messages</div>
-        <div class="output-tab" id="tabJson"  onclick="switchOutputTab('json')">JSON</div>
-      </div>
-      <div class="output-panel idle" id="outputPanel">Click ▶ Run to execute</div>
-    </div>` : `
-    <div class="output-wrap">
-      <div class="output-tabs"><div class="output-tab active">Output</div></div>
-      <div class="output-panel idle" id="outputPanel">Click ▶ Run to execute</div>
-    </div>`;
+  const needsKey = !m.noKey && !m.jwt;
+  const keyField = needsKey ? renderApiKeyParam() : '';
+  const jwtField = m.jwt ? renderJwtParam() : '';
+  const paramsHtml = (m.params||[]).map(renderParam).join('');
+  const runDisabled = (m.jwt && !localStorage.getItem('gm_id_token')) ? ' disabled' : '';
+  const tabsHtml = m.extra==='recall_view'
+    ? `<div id="statsPanel"></div>
+       <div class="output-wrap"><div class="output-tabs">
+         <div class="output-tab active" id="tabCards" onclick="switchTab('cards')">Nodes</div>
+         <div class="output-tab" id="tabJson" onclick="switchTab('json')">JSON</div>
+       </div><div class="output-panel idle" id="outputPanel">Click ▶ Run to execute</div></div>`
+    : `<div class="output-wrap"><div class="output-tabs"><div class="output-tab active">Output</div></div>
+       <div class="output-panel idle" id="outputPanel">Click ▶ Run to execute</div></div>`;
 
   document.getElementById('methodPanel').innerHTML = `
     <h1 class="method-title">gm.${m.ns}.<span style="color:var(--accent)">${m.label}</span><span class="badge b-${m.badge}">${m.badge}</span></h1>
@@ -872,176 +749,154 @@ function renderPanel(m) {
     <div class="usecase-box"><div class="uc-label">💡 Use Case</div><p class="uc-text">${m.usecase}</p></div>
     <div class="sec-label">Code Example</div>
     <pre class="code-block" id="codeDisplay">${hl(m.code(convId(),collectParams(m),cache()))}</pre>
-    ${paramsHtml}
-    ${jwtBlock}${noKeyBlock}
-    <button class="run-btn" id="runBtn" onclick="runMethod()"${btnOff}><span>▶ Run</span></button>
+    <div class="params-wrap">${jwtField}${keyField}${paramsHtml}</div>
+    <button class="run-btn" id="runBtn" onclick="runMethod()"${m.execute?runDisabled:' disabled'}><span>▶ Run</span></button>
     <div class="sec-label">Output</div>
-    ${tabsHtml}
-    <div id="extraOut"></div>`;
-
-  updateNoKeyNotice();
-}
-
-function updateNoKeyNotice() {
-  const el = document.getElementById('noKeyNotice');
-  const btn = document.getElementById('runBtn');
-  if (!el) return;
-  const k = hasKey();
-  el.style.display = k ? 'none' : 'block';
-  if (btn) btn.disabled = !k;
-}
-
-function switchOutputTab(tab) {
-  state.outputTab = tab;
-  document.getElementById('tabCards')?.classList.toggle('active', tab==='cards');
-  document.getElementById('tabJson')?.classList.toggle('active', tab==='json');
-  const out = document.getElementById('outputPanel');
-  if (out && out._data) renderOutput(out._data, out);
+    ${tabsHtml}`;
 }
 
 function selectMethod(id) {
-  state.method=id;
-  state.outputTab='cards';
+  state.method=id; state.outputTab='cards';
   renderSidebar();
-  const m=METHODS.find(x=>x.id===id);
-  if (m) renderPanel(m);
+  const m=METHODS.find(x=>x.id===id); if (m) renderPanel(m);
+}
+function switchConv(k) { state.conv=k; selectMethod(state.method); }
+
+function switchTab(t) {
+  state.outputTab=t;
+  document.getElementById('tabCards')?.classList.toggle('active',t==='cards');
+  document.getElementById('tabJson')?.classList.toggle('active',t==='json');
+  const o=document.getElementById('outputPanel');
+  if (o?._data) renderOutput(o._data,o);
 }
 
-function switchConv(key) {
-  state.conv=key;
-  selectMethod(state.method);
-}
-
-/* ── Output rendering ─────────────────────────────────────────────── */
-function renderOutput(data, panel) {
-  const m = METHODS.find(x=>x.id===state.method);
-  panel._data = data;
-
-  if (m?.extra === 'recall_view' && state.outputTab === 'cards') {
-    const nodes = data.nodes || data.messages || data.items || [];
-    if (!nodes.length) {
-      panel.className = 'output-panel idle';
-      panel.innerHTML = 'No nodes returned.';
-      return;
-    }
-    panel.className = 'output-panel';
-    panel.style.whiteSpace = 'normal';
-    panel.innerHTML = '<div class="msg-cards">' + nodes.map((n,i) => {
-      const score = n.score !== undefined ? `<span class="msg-card-score">score: ${Number(n.score).toFixed(3)}</span>` : '';
+/* ── Output ──────────────────────────────────────────────────────── */
+function renderOutput(data,panel) {
+  const m=METHODS.find(x=>x.id===state.method);
+  panel._data=data;
+  if (m?.extra==='recall_view' && state.outputTab==='cards') {
+    const nodes=data.messages||data.nodes||data.items||[];
+    if (!nodes.length) { panel.className='output-panel idle'; panel.innerHTML='No nodes returned.'; return; }
+    panel.className='output-panel'; panel.style.whiteSpace='normal';
+    panel.innerHTML='<div class="msg-cards">'+nodes.map((n,i)=>{
+      const score = n.relevance_score !== undefined
+        ? `<span class="score">score: ${Number(n.relevance_score).toFixed(3)}</span>` : '';
+      const resp = n.response
+        ? `<div class="msg-resp">${esc(n.response)}</div>`
+        : `<div class="msg-resp msg-resp-pending">(response pending)</div>`;
       return `<div class="msg-card">
-        <div class="msg-card-header">
-          <span class="tag-user">Turn ${(n.index||i+1)}</span>${score}
-        </div>
-        <div class="msg-prompt">${escHtml(n.prompt||'')}</div>
+        <div class="msg-card-hdr"><span class="turn">Node ${n.index ?? i+1}</span>${score}</div>
+        <div class="msg-prompt">${esc(n.prompt||'')}</div>
         <div class="msg-divider"></div>
-        <div class="msg-response">${escHtml(n.response||'')}</div>
+        ${resp}
       </div>`;
-    }).join('') + '</div>';
+    }).join('')+'</div>';
   } else {
-    panel.className = 'output-panel';
-    panel.style.whiteSpace = 'pre-wrap';
-    panel.textContent = JSON.stringify(data, null, 2);
+    panel.className='output-panel'; panel.style.whiteSpace='pre-wrap';
+    panel.textContent=JSON.stringify(data,null,2);
   }
 }
 
-/* ── Run ──────────────────────────────────────────────────────────── */
 async function runMethod() {
-  const m=METHODS.find(x=>x.id===state.method);
-  if (!m||!m.execute) return;
-  const btn=document.getElementById('runBtn');
-  const out=document.getElementById('outputPanel');
-  const extra=document.getElementById('extraOut');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span> Running…';
-  out.className='output-panel idle';
-  out.textContent='Running…';
-  out.style.whiteSpace='normal';
-  extra.innerHTML='';
+  const m=METHODS.find(x=>x.id===state.method); if (!m||!m.execute) return;
+  const btn=document.getElementById('runBtn'), out=document.getElementById('outputPanel');
+  const statsEl=document.getElementById('statsPanel');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Running…';
+  out.className='output-panel idle'; out.textContent='Running…'; out.style.whiteSpace='normal';
+  if (statsEl) statsEl.innerHTML='';
   try {
     const data=await m.execute(convId(),collectParams(m),cache());
-    out.className='output-panel';
-    renderOutput(data, out);
-    if (m.extra==='recall_view' && data.token_count!==undefined) renderTokenSavings(data,extra);
+    if (m.extra==='recall_view' && statsEl) renderStats(data, statsEl, cache());
+    renderOutput(data,out);
   } catch(e) {
-    out.className='output-panel err';
-    out.style.whiteSpace='pre-wrap';
-    out.textContent=e.message;
-  } finally {
-    btn.disabled=false; btn.innerHTML='<span>▶ Run</span>';
-  }
+    out.className='output-panel err'; out.style.whiteSpace='pre-wrap'; out.textContent=e.message;
+  } finally { btn.disabled=false; btn.innerHTML='<span>▶ Run</span>'; }
 }
 
-function renderTokenSavings(data,container) {
-  const gm=data.token_count||0;
-  const full=data._fullEst||7500;
-  const pct=Math.max(0,Math.min(100,Math.round((1-gm/full)*100)));
-  const gmPct=Math.round((gm/full)*100);
-  container.innerHTML=`
+function renderStats(data, el, c) {
+  const nodes      = data.messages || data.nodes || [];
+  const retrieved  = nodes.length;
+  const totalNodes = data._nodeCount || (c && c.nodes && c.nodes.length) || 0;
+  const gmTokens   = data.total_tokens || 0;
+  const strategy   = data.strategy_used || 'unknown';
+
+  const fullEst = data._fullEst || (totalNodes > 0 && retrieved > 0
+    ? Math.round(gmTokens * totalNodes / retrieved)
+    : (gmTokens > 0 ? gmTokens * 10 : 7500));
+  const pct  = gmTokens > 0 ? Math.max(0, Math.min(99, Math.round((1 - gmTokens/fullEst) * 100))) : 0;
+  const gmW  = Math.max(1, Math.round(gmTokens / fullEst * 100));
+
+  const stratColor = {'cold_start':'var(--yellow)','semantic':'var(--accent)','semantic_recency':'var(--blue)'}[strategy]||'var(--text-3)';
+
+  const coldBanner = strategy === 'cold_start'
+    ? `<div class="cold-banner"><span class="cold-icon">⚠</span><span>Embeddings still processing — showing full conversation history as fallback. Semantic retrieval activates once the node worker completes.</span></div>`
+    : '';
+
+  el.innerHTML = `
+    ${coldBanner}
+    <div class="recall-stats-grid">
+      <div class="rs-card">
+        <div class="rs-val">${totalNodes > 0 ? totalNodes : '—'}</div>
+        <div class="rs-key">Graph Nodes</div>
+      </div>
+      <div class="rs-card">
+        <div class="rs-val">${retrieved}</div>
+        <div class="rs-key">Retrieved</div>
+      </div>
+      <div class="rs-card">
+        <div class="rs-val" style="color:var(--accent)">${pct > 0 ? pct+'%' : '—'}</div>
+        <div class="rs-key">Token Reduction</div>
+      </div>
+      <div class="rs-card">
+        <div class="rs-val rs-strategy" style="color:${stratColor}">${strategy.replace(/_/g,' ')}</div>
+        <div class="rs-key">Strategy</div>
+      </div>
+    </div>
     <div class="token-savings">
-      <div class="ts-title">Token savings vs full history</div>
+      <div class="ts-title">Token context comparison</div>
       <div class="ts-row">
-        <div class="ts-row-label"><span>Full history (est.)</span><span>${full.toLocaleString()} tokens</span></div>
-        <div class="ts-track"><div class="ts-full-bar"></div></div>
+        <div class="ts-lbl"><span>Full history (est.)</span><span>${fullEst.toLocaleString()} tokens</span></div>
+        <div class="ts-track"><div style="height:100%;background:var(--border-2);border-radius:4px;width:100%"></div></div>
       </div>
       <div class="ts-row">
-        <div class="ts-row-label"><span>GraphMem recall output</span><span>${gm.toLocaleString()} tokens</span></div>
-        <div class="ts-track"><div class="ts-fill" style="width:${gmPct}%">${gmPct>12?gmPct+'%':''}</div></div>
+        <div class="ts-lbl"><span>GraphMem recall</span><span>${gmTokens.toLocaleString()} tokens</span></div>
+        <div class="ts-track"><div class="ts-fill" style="width:${gmW}%">${gmW>12?gmW+'%':''}</div></div>
       </div>
-      <div class="ts-savings">↓ ${pct}% token reduction — same relevant context, far lower cost</div>
+      ${pct > 0 ? `<div class="ts-savings">↓ ${pct}% token reduction — ${(fullEst-gmTokens).toLocaleString()} tokens saved</div>` : ''}
     </div>`;
 }
 
 /* ── Init ─────────────────────────────────────────────────────────── */
 async function init() {
-  // Read API key from localStorage (set after login/dashboard)
-  const storedKey = gmGetApiKey ? gmGetApiKey() : localStorage.getItem('gm_api_key');
-  if (storedKey) document.getElementById('apiKeyInput').value = storedKey;
-
-  // Update nav: show email if logged in
-  if (typeof gmIsAuthenticated === 'function' && gmIsAuthenticated()) {
-    const navLogin = document.getElementById('navLogin');
-    if (navLogin) navLogin.textContent = gmGetEmail ? gmGetEmail() : 'Account';
+  // Nav: show logged-in email
+  if (typeof gmIsAuthenticated==='function' && gmIsAuthenticated()) {
+    const email=localStorage.getItem('gm_email')||'';
+    const nu=document.getElementById('navUser');
+    const nl=document.getElementById('navLogin');
+    if (nu) nu.textContent=email;
+    if (nl) nl.style.display='none';
   }
 
-  // Save key on change
-  document.getElementById('apiKeyInput').addEventListener('input', () => {
-    const k = document.getElementById('apiKeyInput').value.trim();
-    if (k) localStorage.setItem('gm_api_key', k);
-    updateNoKeyNotice();
-  });
-
-  // Prefetch demo conversation data
-  for (const [key,conv] of [['conv1',CONF.conv1],['conv2',CONF.conv2]]) {
-    try {
-      const sKey = 'gm_demo_' + key;
-      const cached = sessionStorage.getItem(sKey);
-      if (cached) {
-        Object.assign(state.cache[key], JSON.parse(cached));
-        continue;
-      }
-      // Only prefetch if a key is available
-      if (!apiKey()) continue;
-      const [nR,tR]=await Promise.all([
-        apiFetch(`/conversations/${conv.id}/export`),
-        apiFetch(`/topics?conversation_id=${conv.id}`)
-      ]);
-      const nodes=await nR.json(), topics=await tR.json();
-      const nArr=Array.isArray(nodes)?nodes:[];
-      const tArr=Array.isArray(topics)?topics:[];
-      const cacheObj = {
-        nodes:nArr, topics:tArr,
-        nodeId: nArr.find(n=>n.status==='complete')?.memory_id||nArr[0]?.memory_id||null,
-        topicId: tArr[0]?.topic_id||null
-      };
-      Object.assign(state.cache[key], cacheObj);
-      sessionStorage.setItem(sKey, JSON.stringify(cacheObj));
-    } catch(e){ console.warn('cache fail',key,e.message); }
+  // Prefetch demo data if API key available
+  const key=localStorage.getItem('gm_api_key')||'';
+  if (key) {
+    for (const [k,c] of [['conv1',CONF.conv1],['conv2',CONF.conv2]]) {
+      try {
+        const [nR,tR]=await Promise.all([
+          fetch(`/conversations/${c.id}/export`,{headers:{'X-API-Key':key}}),
+          fetch(`/topics?conversation_id=${c.id}`,{headers:{'X-API-Key':key}})
+        ]);
+        const nodes=nR.ok?await nR.json():[], topics=tR.ok?await tR.json():[];
+        const nA=Array.isArray(nodes)?nodes:[], tA=Array.isArray(topics)?topics:[];
+        state.cache[k]={nodes:nA,topics:tA,
+          nodeId:nA.find(n=>n.status==='complete')?.memory_id||nA[0]?.memory_id||null,
+          topicId:tA[0]?.topic_id||null};
+      } catch(e){ console.warn(e); }
+    }
   }
-
   renderSidebar();
   selectMethod('memory.recall');
 }
-
 init();
 </script>
 </body>
