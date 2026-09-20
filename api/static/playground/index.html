@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GraphMem Playground</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --surface2: #1e1e24;
+      --border: #2a2a35;
+      --accent: #7c6af7;
+      --accent2: #5b9af5;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e2e2ea;
+      --text2: #9090a8;
+      --text3: #5a5a72;
+      --radius: 8px;
+      --font: 'Inter', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .api-key-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .api-key-wrap label { color: var(--text2); font-size: 12px; }
+
+    input[type="text"], input[type="password"], textarea, select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    #apiKeyInput { width: 260px; }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text3);
+      transition: background 0.3s;
+    }
+    .status-dot.ok { background: var(--green); }
+    .status-dot.err { background: var(--red); }
+
+    .btn {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left Nav ─────────────────────────────────────────────── */
+    nav {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 16px 0;
+    }
+
+    .nav-section {
+      padding: 4px 12px 8px;
+    }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text3);
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 13px;
+      transition: background 0.1s, color 0.1s;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(124,106,247,0.15); color: var(--accent); }
+
+    .nav-badge {
+      margin-left: auto;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .badge-post { background: rgba(90,154,245,0.2); color: var(--accent2); }
+    .badge-get { background: rgba(74,222,128,0.15); color: var(--green); }
+    .badge-del { background: rgba(248,113,113,0.15); color: var(--red); }
+
+    /* ── Context bar ─────────────────────────────────────────── */
+    .context-bar {
+      background: rgba(124,106,247,0.08);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .context-bar label { color: var(--text2); }
+    .context-bar span {
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 11px;
+      background: rgba(124,106,247,0.15);
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .context-bar span:hover { background: rgba(124,106,247,0.25); }
+
+    /* ── Center Panel ─────────────────────────────────────────── */
+    .center-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .endpoint-method {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 4px;
+    }
+    .method-post { background: rgba(90,154,245,0.2); color: var(--accent2); }
+    .method-get  { background: rgba(74,222,128,0.15); color: var(--green); }
+    .method-delete { background: rgba(248,113,113,0.15); color: var(--red); }
+
+    .endpoint-path {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    textarea.body-editor {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .panel-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ── Right Panel ──────────────────────────────────────────── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .response-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .response-status {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .status-2xx { background: rgba(74,222,128,0.15); color: var(--green); }
+    .status-4xx { background: rgba(248,113,113,0.15); color: var(--red); }
+    .status-5xx { background: rgba(251,191,36,0.15);  color: var(--yellow); }
+
+    .latency-badge {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .response-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 8px 16px 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text2);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s;
+    }
+    .tab-btn.active { color: var(--accent); border-color: var(--accent); }
+    .tab-btn:hover { color: var(--text); }
+
+    .response-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    pre.json {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .key   { color: #b39ddb; }
+    .str   { color: #a5d6a7; }
+    .num   { color: #80cbc4; }
+    .bool  { color: var(--accent2); }
+    .null  { color: var(--text3); }
+
+    /* ── Recall viz ───────────────────────────────────────────── */
+    .recall-cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .recall-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+    }
+    .recall-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .recall-score {
+      font-size: 11px;
+      font-family: var(--mono);
+      background: rgba(124,106,247,0.2);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .recall-set {
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .recall-prompt { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+    .recall-response { font-size: 12px; color: var(--text); }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 10px;
+      color: var(--text3);
+    }
+    .empty-icon { font-size: 32px; }
+    .empty-text { font-size: 13px; }
+
+    /* ── Spinner ──────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    .copy-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 6px;
+    }
+    .copy-btn:hover { color: var(--text); }
+
+    .info-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    GraphMem
+    <span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:2px;">playground</span>
+  </div>
+  <div class="header-right">
+    <div class="api-key-wrap">
+      <label for="apiKeyInput">API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="gm_sk_..." />
+    </div>
+    <button class="btn btn-secondary" onclick="pingHealth()">Health</button>
+    <div class="status-dot" id="statusDot" title="API status"></div>
+  </div>
+</header>
+
+<!-- ── Context bar ─────────────────────────────────────────────────── -->
+<div class="context-bar">
+  <label>Active conversation:</label>
+  <span id="convIdDisplay" onclick="copyConvId()" title="Click to copy">none — create one first</span>
+  <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="quickCreate()">+ New</button>
+  <input type="text" id="convIdInput" placeholder="or paste existing ID…" style="width:300px;font-size:11px;" oninput="setConvId(this.value)" />
+</div>
+
+<!-- ── Layout ──────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- LEFT NAV -->
+  <nav id="nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Conversations</div>
+      <div class="nav-item" onclick="selectEndpoint('conv_create')">
+        <span class="nav-badge badge-post">POST</span> Create
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('conv_list')">
+        <span class="nav-badge badge-get">GET</span> List
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('conv_stats')">
+        <span class="nav-badge badge-get">GET</span> Stats
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('conv_export')">
+        <span class="nav-badge badge-get">GET</span> Export
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('conv_delete')">
+        <span class="nav-badge badge-del">DEL</span> Delete
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Memory</div>
+      <div class="nav-item" onclick="selectEndpoint('mem_prompt')">
+        <span class="nav-badge badge-post">POST</span> Add Prompt
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('mem_response')">
+        <span class="nav-badge badge-post">POST</span> Add Response
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('mem_batch')">
+        <span class="nav-badge badge-post">POST</span> Add Batch
+      </div>
+      <div class="nav-item active" onclick="selectEndpoint('mem_recall')">
+        <span class="nav-badge badge-post">POST</span> Recall ✦
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('mem_get')">
+        <span class="nav-badge badge-get">GET</span> Get Node
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('mem_neighbours')">
+        <span class="nav-badge badge-get">GET</span> Neighbours
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('mem_delete')">
+        <span class="nav-badge badge-del">DEL</span> Delete Node
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Topics</div>
+      <div class="nav-item" onclick="selectEndpoint('topic_list')">
+        <span class="nav-badge badge-get">GET</span> List
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('topic_current')">
+        <span class="nav-badge badge-get">GET</span> Current
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('topic_relevance')">
+        <span class="nav-badge badge-get">GET</span> Relevance
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('topic_retrieve')">
+        <span class="nav-badge badge-post">POST</span> Retrieve
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('topic_recompute')">
+        <span class="nav-badge badge-post">POST</span> Recompute
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Auth</div>
+      <div class="nav-item" onclick="selectEndpoint('auth_create')">
+        <span class="nav-badge badge-post">POST</span> Create Key
+      </div>
+      <div class="nav-item" onclick="selectEndpoint('auth_list')">
+        <span class="nav-badge badge-get">GET</span> List Keys
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Utils</div>
+      <div class="nav-item" onclick="selectEndpoint('utils_tokens')">
+        <span class="nav-badge badge-post">POST</span> Count Tokens
+      </div>
+    </div>
+  </nav>
+
+  <!-- CENTER PANEL -->
+  <div class="center-panel">
+    <div class="panel-header">
+      <span class="endpoint-method" id="reqMethod">POST</span>
+      <span class="endpoint-path" id="reqPath">/memory/recall</span>
+    </div>
+    <div class="panel-body" id="panelBody">
+      <!-- populated by JS -->
+    </div>
+    <div class="panel-footer">
+      <button class="btn btn-primary" id="runBtn" onclick="runRequest()">
+        Run
+      </button>
+      <button class="btn btn-secondary" onclick="resetBody()">Reset</button>
+      <span id="runStatus" style="font-size:12px;color:var(--text3);"></span>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="response-header">
+      <span style="font-size:13px;font-weight:600;">Response</span>
+      <span class="response-status" id="respStatus" style="display:none"></span>
+      <span class="latency-badge" id="respLatency"></span>
+      <button class="copy-btn" onclick="copyResponse()" title="Copy JSON">⧉</button>
+    </div>
+    <div class="response-tabs">
+      <button class="tab-btn active" onclick="setTab('raw',this)">Raw JSON</button>
+      <button class="tab-btn" onclick="setTab('visual',this)">Visual</button>
+    </div>
+    <div class="response-body" id="responseBody">
+      <div class="empty-state">
+        <div class="empty-icon">◈</div>
+        <div class="empty-text">Run a request to see the response</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────
+let BASE_URL = window.location.origin;
+let currentConvId = null;
+let lastResponse = null;
+let currentEndpoint = 'mem_recall';
+let currentTab = 'raw';
+
+// ── Endpoint definitions ──────────────────────────────────────────────
+const ENDPOINTS = {
+  conv_create:    { method: 'POST',   path: '/conversations',          body: '{}' },
+  conv_list:      { method: 'GET',    path: '/conversations',          body: null },
+  conv_stats:     { method: 'GET',    path: '/conversations/{id}/stats', body: null },
+  conv_export:    { method: 'GET',    path: '/conversations/{id}/export', body: null },
+  conv_delete:    { method: 'DELETE', path: '/conversations/{id}',     body: null },
+  mem_prompt:     { method: 'POST',   path: '/memory/prompt',          body: '{\n  "conversation_id": "{id}",\n  "content": "What is semantic memory in LLM agents?"\n}' },
+  mem_response:   { method: 'POST',   path: '/memory/{memory_id}/response', body: '{\n  "conversation_id": "{id}",\n  "content": "Semantic memory stores factual knowledge and concepts, distinct from episodic memory which stores specific events."\n}' },
+  mem_batch:      { method: 'POST',   path: '/memory/batch',           body: '{\n  "items": [\n    {\n      "conversation_id": "{id}",\n      "prompt": "What is a vector database?",\n      "response": "A database optimized for storing and querying high-dimensional embedding vectors."\n    }\n  ]\n}' },
+  mem_recall:     { method: 'POST',   path: '/memory/recall',          body: '{\n  "conversation_id": "{id}",\n  "query": "How does semantic memory work?",\n  "k": 5,\n  "max_tokens": 2000,\n  "strategy": "semantic"\n}' },
+  mem_get:        { method: 'GET',    path: '/memory/{memory_id}',     body: null },
+  mem_neighbours: { method: 'GET',    path: '/memory/{memory_id}/neighbours?threshold=0.5', body: null },
+  mem_delete:     { method: 'DELETE', path: '/memory/{memory_id}',     body: null },
+  topic_list:     { method: 'GET',    path: '/topics?conversation_id={id}', body: null },
+  topic_current:  { method: 'GET',    path: '/topics/current?conversation_id={id}', body: null },
+  topic_relevance:{ method: 'GET',    path: '/topics/relevance?conversation_id={id}&query=machine+learning', body: null },
+  topic_retrieve: { method: 'POST',   path: '/topics/retrieve',        body: '{\n  "conversation_id": "{id}",\n  "query": "machine learning concepts",\n  "top_n": 3\n}' },
+  topic_recompute:{ method: 'POST',   path: '/topics/recompute?conversation_id={id}', body: null },
+  auth_create:    { method: 'POST',   path: '/auth/keys',              body: '{\n  "project_name": "my-agent",\n  "permissions": {"read": true, "write": true}\n}' },
+  auth_list:      { method: 'GET',    path: '/auth/keys',              body: null },
+  utils_tokens:   { method: 'POST',   path: '/utils/count_tokens',     body: '{\n  "text": "Hello! This is a test of the token counting utility."\n}' },
+};
+
+function getApiKey() {
+  return document.getElementById('apiKeyInput').value.trim() || localStorage.getItem('gm_api_key') || '';
+}
+
+function resolvedPath(ep) {
+  let path = ep.path;
+  if (currentConvId) path = path.replace('{id}', currentConvId);
+  return path;
+}
+
+function resolvedBody(ep) {
+  if (!ep.body) return null;
+  let b = ep.body;
+  if (currentConvId) b = b.replace(/\{id\}/g, currentConvId);
+  return b;
+}
+
+// ── UI ────────────────────────────────────────────────────────────────
+function selectEndpoint(key) {
+  currentEndpoint = key;
+  const ep = ENDPOINTS[key];
+  document.getElementById('reqMethod').textContent = ep.method;
+  document.getElementById('reqMethod').className = 'endpoint-method method-' + ep.method.toLowerCase();
+  document.getElementById('reqPath').textContent = resolvedPath(ep);
+
+  // Update active nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  // Render body editor or info
+  const pb = document.getElementById('panelBody');
+  if (ep.body !== null) {
+    pb.innerHTML = `
+      <div class="field-group">
+        <div class="field-label">Request Body</div>
+        <textarea class="body-editor" id="bodyEditor">${resolvedBody(ep)}</textarea>
+      </div>
+      <div class="info-box" id="endpointHint"></div>
+    `;
+  } else {
+    const hasMemId = ep.path.includes('{memory_id}');
+    pb.innerHTML = `
+      ${hasMemId ? `<div class="field-group">
+        <div class="field-label">Memory ID</div>
+        <input type="text" id="memIdInput" placeholder="paste memory_id here…" style="width:100%" />
+      </div>` : ''}
+      <div class="info-box">
+        <strong style="color:var(--text)">${ep.method} ${ep.path}</strong><br/>
+        No request body required. ${currentConvId ? 'Using conversation: <code style="color:var(--accent)">' + currentConvId.slice(0,8) + '…</code>' : 'Create a conversation first.'}
+      </div>
+    `;
+  }
+}
+
+function renderPanel() { selectEndpoint(currentEndpoint); }
+
+// ── Conversation context ───────────────────────────────────────────────
+function setConvId(val) {
+  val = val.trim();
+  if (val) {
+    currentConvId = val;
+    document.getElementById('convIdDisplay').textContent = val.slice(0,8) + '…';
+    renderPanel();
+  }
+}
+
+function copyConvId() {
+  if (!currentConvId) return;
+  navigator.clipboard.writeText(currentConvId);
+}
+
+async function quickCreate() {
+  const key = getApiKey();
+  if (!key) { alert('Enter an API key first'); return; }
+  try {
+    const r = await fetch(`${BASE_URL}/conversations`, {
+      method: 'POST',
+      headers: { 'X-API-Key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await r.json();
+    if (data.conversation_id) {
+      currentConvId = data.conversation_id;
+      document.getElementById('convIdDisplay').textContent = currentConvId.slice(0,8) + '…';
+      document.getElementById('convIdInput').value = currentConvId;
+      renderPanel();
+      showResponse(r.status, data, 0);
+    }
+  } catch(e) { showError(e.message); }
+}
+
+// ── Run request ────────────────────────────────────────────────────────
+async function runRequest() {
+  const key = getApiKey();
+  if (!key) { alert('Enter an API key in the header'); return; }
+
+  const ep = ENDPOINTS[currentEndpoint];
+  const btn = document.getElementById('runBtn');
+  const statusEl = document.getElementById('runStatus');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  let path = resolvedPath(ep);
+
+  // Sub in memory ID from input if present
+  const memInput = document.getElementById('memIdInput');
+  if (memInput && memInput.value) {
+    path = path.replace('{memory_id}', memInput.value.trim());
+  }
+
+  const headers = { 'X-API-Key': key, 'Content-Type': 'application/json' };
+  const opts = { method: ep.method, headers };
+
+  const bodyEditor = document.getElementById('bodyEditor');
+  if (bodyEditor) {
+    try { opts.body = bodyEditor.value; } catch(e) {}
+  }
+
+  const t0 = performance.now();
+  try {
+    const r = await fetch(`${BASE_URL}${path}`, opts);
+    const latency = Math.round(performance.now() - t0);
+    let data;
+    try { data = await r.json(); } catch { data = { raw: await r.text() }; }
+    showResponse(r.status, data, latency);
+    statusEl.textContent = '';
+    // Auto-update convId if this was a create
+    if (currentEndpoint === 'conv_create' && data.conversation_id) {
+      currentConvId = data.conversation_id;
+      document.getElementById('convIdDisplay').textContent = currentConvId.slice(0,8) + '…';
+      document.getElementById('convIdInput').value = currentConvId;
+      renderPanel();
+    }
+    // Persist API key
+    if (key) localStorage.setItem('gm_api_key', key);
+  } catch(e) {
+    showError(e.message);
+    statusEl.textContent = e.message;
+  } finally {
+    btn.innerHTML = 'Run';
+    btn.disabled = false;
+  }
+}
+
+// ── Response rendering ─────────────────────────────────────────────────
+function showResponse(status, data, latency) {
+  lastResponse = data;
+  const statusEl = document.getElementById('respStatus');
+  statusEl.style.display = '';
+  statusEl.textContent = status;
+  statusEl.className = 'response-status ' + (status < 300 ? 'status-2xx' : status < 500 ? 'status-4xx' : 'status-5xx');
+  document.getElementById('respLatency').textContent = latency ? `${latency}ms` : '';
+  renderResponseTab();
+
+  // update status dot
+  document.getElementById('statusDot').className = 'status-dot ' + (status < 400 ? 'ok' : 'err');
+}
+
+function showError(msg) {
+  lastResponse = { error: msg };
+  document.getElementById('responseBody').innerHTML =
+    `<pre class="json"><span class="str">${escHtml(msg)}</span></pre>`;
+}
+
+function setTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderResponseTab();
+}
+
+function renderResponseTab() {
+  const rb = document.getElementById('responseBody');
+  if (!lastResponse) return;
+  if (currentTab === 'raw') {
+    rb.innerHTML = `<pre class="json">${syntaxHighlight(JSON.stringify(lastResponse, null, 2))}</pre>`;
+  } else {
+    renderVisual(rb, lastResponse);
+  }
+}
+
+function renderVisual(container, data) {
+  // Special rendering for recall results
+  if (data.messages && Array.isArray(data.messages)) {
+    let html = `
+      <div style="margin-bottom:12px;font-size:12px;color:var(--text2)">
+        ${data.messages.length} messages · ${data.total_tokens ?? '?'} tokens · strategy: <code style="color:var(--accent)">${data.strategy_used ?? '?'}</code>
+      </div>
+      <div class="recall-cards">`;
+    for (const m of data.messages) {
+      html += `<div class="recall-card">
+        <div class="recall-card-header">
+          <span class="recall-score">${m.score ? m.score.toFixed(3) : '—'}</span>
+          <span class="recall-set">${m.set_membership ?? ''}</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono)">${(m.memory_id||'').slice(0,8)}…</span>
+        </div>
+        <div class="recall-prompt">Q: ${escHtml(m.prompt || '')}</div>
+        <div class="recall-response">A: ${escHtml(m.response || '')}</div>
+      </div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  } else {
+    // Fallback: key-value table
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    const flat = flatObj(data);
+    for (const [k, v] of Object.entries(flat)) {
+      html += `<tr>
+        <td style="padding:5px 8px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--mono)">${escHtml(k)}</td>
+        <td style="padding:5px 8px;color:var(--text);border-bottom:1px solid var(--border);word-break:break-all">${escHtml(String(v))}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    container.innerHTML = html;
+  }
+}
+
+function flatObj(obj, prefix='') {
+  const out = {};
+  for (const [k, v] of Object.entries(obj || {})) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      Object.assign(out, flatObj(v, key));
+    } else {
+      out[key] = Array.isArray(v) ? `[${v.length} items]` : v;
+    }
+  }
+  return out;
+}
+
+// ── Health ping ────────────────────────────────────────────────────────
+async function pingHealth() {
+  try {
+    const r = await fetch(`${BASE_URL}/health`);
+    const d = await r.json();
+    showResponse(r.status, d, 0);
+    document.getElementById('statusDot').className = 'status-dot ' + (r.status === 200 ? 'ok' : 'err');
+  } catch(e) {
+    document.getElementById('statusDot').className = 'status-dot err';
+  }
+}
+
+function resetBody() {
+  const ep = ENDPOINTS[currentEndpoint];
+  const ed = document.getElementById('bodyEditor');
+  if (ed && ep.body) ed.value = resolvedBody(ep);
+}
+
+function copyResponse() {
+  if (lastResponse) navigator.clipboard.writeText(JSON.stringify(lastResponse, null, 2));
+}
+
+// ── Syntax highlight ───────────────────────────────────────────────────
+function syntaxHighlight(json) {
+  return escHtml(json).replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false)\b|\b(null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    match => {
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) return `<span class="key">${match}</span>`;
+        return `<span class="str">${match}</span>`;
+      }
+      if (/true|false/.test(match)) return `<span class="bool">${match}</span>`;
+      if (/null/.test(match)) return `<span class="null">${match}</span>`;
+      return `<span class="num">${match}</span>`;
+    }
+  );
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+const savedKey = localStorage.getItem('gm_api_key');
+if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
+
+selectEndpoint('mem_recall');
+pingHealth();
+</script>
+</body>
+</html>
