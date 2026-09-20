@@ -1,482 +1,895 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Playground — GraphMem</title>
-  <link rel="stylesheet" href="/static/css/styles.css" />
+  <link rel="stylesheet" href="/static/css/styles.css"/>
+  <style>
+    body { overflow: hidden; margin: 0; }
+    .pg-wrap { display: flex; height: 100vh; padding-top: 64px; box-sizing: border-box; }
+
+    /* ── Sidebar ───────────────────────────────────────────────── */
+    .pg-sidebar {
+      width: 248px; min-width: 248px; background: #0d1117;
+      border-right: 1px solid #1e2a38;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .pg-sidebar-top { padding: 14px; border-bottom: 1px solid #1e2a38; }
+    .pg-field-label {
+      font-size: 10px; font-weight: 700; color: #6e7681;
+      text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px;
+    }
+    .pg-api-key, .pg-conv-select {
+      width: 100%; box-sizing: border-box; background: #161b22;
+      border: 1px solid #30363d; border-radius: 6px; color: #e6edf3;
+      font-size: 12px; padding: 7px 10px; font-family: 'SF Mono', monospace;
+    }
+    .pg-api-key { margin-bottom: 10px; }
+    .pg-conv-select { cursor: pointer; }
+    .pg-method-list { flex: 1; overflow-y: auto; padding: 6px 0 24px; }
+    .pg-ns-head {
+      font-size: 10px; font-weight: 700; color: #484f58;
+      text-transform: uppercase; letter-spacing: .9px; padding: 14px 14px 4px;
+    }
+    .pg-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px 6px 22px; font-size: 13px; color: #8b949e;
+      cursor: pointer; border-left: 2px solid transparent;
+      transition: all .12s; font-family: 'SF Mono', monospace;
+      user-select: none;
+    }
+    .pg-item:hover { color: #e6edf3; background: #161b22; }
+    .pg-item.active { color: #00d97e; border-left-color: #00d97e; background: #0d1f18; }
+    .jwt-tag {
+      font-size: 9px; background: #2d1b00; color: #d29922;
+      border-radius: 3px; padding: 1px 4px; font-family: sans-serif;
+    }
+
+    /* ── Main ──────────────────────────────────────────────────── */
+    .pg-main { flex: 1; overflow-y: auto; padding: 36px 44px 64px; background: #fff; }
+    .method-title {
+      font-size: 21px; font-weight: 700; color: #0f1923; margin: 0 0 3px;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+    .method-http { font-size: 12px; color: #8b949e; margin: 0 0 18px; font-family: monospace; }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px; margin-left: 8px;
+      vertical-align: middle; position: relative; top: -2px;
+    }
+    .b-POST   { background: #0d261c; color: #00d97e; }
+    .b-GET    { background: #0a1628; color: #388bfd; }
+    .b-DELETE { background: #2d0f0f; color: #f85149; }
+    .method-desc { font-size: 14px; color: #374151; line-height: 1.65; margin-bottom: 16px; }
+    .usecase-box {
+      background: #f0fdf9; border: 1px solid #a7f3d0;
+      border-left: 3px solid #00d97e; border-radius: 8px;
+      padding: 13px 16px; margin-bottom: 26px;
+    }
+    .uc-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: #059669; margin-bottom: 5px;
+    }
+    .uc-text { font-size: 13px; color: #064e3b; margin: 0; line-height: 1.55; }
+    .sec-label {
+      font-size: 11px; font-weight: 700; color: #6e7681;
+      text-transform: uppercase; letter-spacing: .8px; margin: 0 0 8px;
+    }
+    pre.code-block {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 10px;
+      padding: 18px 20px; font-family: 'SF Mono', Consolas, monospace;
+      font-size: 12.5px; line-height: 1.75; color: #e6edf3;
+      overflow-x: auto; margin: 0 0 20px; white-space: pre;
+    }
+    .ck { color: #ff7b72; } .cs { color: #a5d6ff; }
+    .cc { color: #6e7681; } .cn { color: #f2cc60; }
+    .params-wrap { margin-bottom: 20px; }
+    .param-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .param-label { font-size: 12px; font-weight: 600; color: #374151; min-width: 100px; }
+    .param-input {
+      flex: 1; border: 1px solid #d1d5db; border-radius: 6px;
+      padding: 7px 11px; font-size: 13px; font-family: 'SF Mono', monospace;
+      color: #0f1923; background: #f9fafb; transition: border-color .15s;
+    }
+    .param-input:focus { outline: none; border-color: #00d97e; background: #fff; }
+    .param-input[type=number] { max-width: 90px; }
+    .param-id {
+      flex: 1; font-size: 11px; font-family: 'SF Mono', monospace; color: #6e7681;
+      background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px;
+      padding: 7px 11px; word-break: break-all;
+    }
+    .run-btn {
+      display: inline-flex; align-items: center; gap: 8px; background: #00d97e;
+      color: #0d1117; border: none; border-radius: 8px; padding: 10px 26px;
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; margin-bottom: 26px;
+    }
+    .run-btn:hover { background: #00b868; transform: translateY(-1px); }
+    .run-btn:active { transform: none; }
+    .run-btn:disabled { background: #6b7280; cursor: not-allowed; transform: none; }
+    .spinner {
+      width: 14px; height: 14px; border: 2px solid #0d1117;
+      border-top-color: transparent; border-radius: 50%;
+      animation: spin .7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .jwt-notice {
+      background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;
+      padding: 12px 16px; font-size: 13px; color: #92400e; margin-bottom: 18px;
+    }
+    .output-panel {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 10px;
+      padding: 16px 20px; font-family: 'SF Mono', Consolas, monospace;
+      font-size: 12.5px; line-height: 1.6; color: #e6edf3;
+      max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+    }
+    .output-panel.idle { color: #6e7681; font-style: italic; white-space: normal; }
+    .output-panel.err  { border-color: #f85149; color: #ff7b72; }
+    .context-label {
+      font-size: 11px; font-weight: 700; color: #6e7681;
+      text-transform: uppercase; letter-spacing: .8px; margin: 18px 0 6px;
+    }
+    .context-box {
+      background: #1c2128; border: 1px solid #30363d; border-radius: 8px;
+      padding: 14px 16px; font-size: 12px; line-height: 1.6; color: #c9d1d9;
+      max-height: 180px; overflow-y: auto; white-space: pre-wrap; font-family: 'SF Mono', monospace;
+    }
+    .token-savings {
+      margin-top: 18px; padding: 18px 20px; background: #f0fdf9;
+      border: 1px solid #a7f3d0; border-radius: 10px;
+    }
+    .ts-title { font-size: 13px; font-weight: 700; color: #065f46; margin: 0 0 14px; }
+    .ts-row { margin-bottom: 10px; }
+    .ts-row-label { display: flex; justify-content: space-between; font-size: 11px; color: #374151; margin-bottom: 4px; }
+    .ts-track { height: 22px; background: #d1fae5; border-radius: 5px; overflow: hidden; }
+    .ts-fill {
+      height: 100%; background: #00d97e; border-radius: 5px;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 8px; font-size: 10px; font-weight: 700; color: #0d1117;
+      transition: width .7s ease;
+    }
+    .ts-savings { font-size: 13px; font-weight: 700; color: #065f46; margin-top: 10px; }
+  </style>
 </head>
 <body>
 
-<!-- ── Nav ──────────────────────────────────────────────────────── -->
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo"><span class="logo-icon">⬡</span>GraphMem</a>
-    <a href="/" class="nav-link">Home</a>
+    <a href="/reference" class="nav-link">Docs</a>
     <a href="/reference" class="nav-link">Reference</a>
     <a href="/playground" class="nav-link active">Playground</a>
+    <a href="https://github.com/avik22835/graphmem" class="nav-link" target="_blank" rel="noopener">GitHub ↗</a>
     <div class="nav-right">
       <div class="nav-divider"></div>
-      <a href="/login" class="nav-link" id="navSignIn">Log in</a>
-      <a href="/signup" class="btn btn-ghost btn-sm" id="navSignUp">Get API Key</a>
+      <a href="/login" class="nav-link">Log in</a>
+      <a href="/signup" class="btn btn-ghost btn-sm">Get API Key</a>
     </div>
   </div>
 </nav>
 
-<!-- ── Auth banner ──────────────────────────────────────────────── -->
-<div class="pg-auth-bar">
-  <div class="pg-auth-inner">
-    <div class="pg-auth-label">API key</div>
-    <input
-      type="password" id="pgApiKey"
-      class="pg-auth-input" placeholder="gm_sk_..."
-      autocomplete="off" spellcheck="false"
-    />
-    <button class="btn btn-primary btn-sm" onclick="saveKey()">Use</button>
-    <a href="/dashboard" class="btn btn-ghost btn-sm" style="margin-left:auto;">Manage keys →</a>
-    <span class="pg-key-status hidden" id="pgKeyStatus"></span>
-  </div>
-</div>
-
-<!-- ── 3-panel playground ────────────────────────────────────────── -->
 <div class="pg-wrap">
-
-  <!-- Left: endpoint list ────────────────────────────────────────── -->
   <aside class="pg-sidebar">
-    <div class="pg-sidebar-section">
-      <span class="pg-sidebar-label">Quick start</span>
-      <button class="pg-ep-btn active" onclick="selectEndpoint('health')">Health check</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('create-conversation')">Create conversation</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('recall')">Recall ✦</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-retrieve')">Topic retrieve ✦</button>
+    <div class="pg-sidebar-top">
+      <div class="pg-field-label">API Key</div>
+      <input class="pg-api-key" id="apiKeyInput" type="text" placeholder="gm_sk_…"/>
+      <div class="pg-field-label" style="margin-top:10px">Demo Conversation</div>
+      <select class="pg-conv-select" id="convSelect" onchange="switchConv(this.value)">
+        <option value="conv2">SaaS App Build (auth → payments → backend)</option>
+        <option value="conv1">Multi-topic Chat (cooking → travel → coding)</option>
+      </select>
     </div>
-    <div class="pg-sidebar-section">
-      <span class="pg-sidebar-label">Conversations</span>
-      <button class="pg-ep-btn" onclick="selectEndpoint('create-conversation')">Create</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('list-conversations')">List</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('conv-stats')">Stats</button>
-    </div>
-    <div class="pg-sidebar-section">
-      <span class="pg-sidebar-label">Memory</span>
-      <button class="pg-ep-btn" onclick="selectEndpoint('add-prompt')">Add prompt</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('add-response')">Add response</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('recall')">Recall</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('get-node')">Get node</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('neighbours')">Neighbours</button>
-    </div>
-    <div class="pg-sidebar-section">
-      <span class="pg-sidebar-label">Topics</span>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-list')">List topics</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-current')">Current topic</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-status')">Status</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-summary')">Summary</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-relevance')">Relevance</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-messages')">Messages</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('topics-retrieve')">Retrieve</button>
-    </div>
-    <div class="pg-sidebar-section">
-      <span class="pg-sidebar-label">Utils</span>
-      <button class="pg-ep-btn" onclick="selectEndpoint('health')">Health</button>
-      <button class="pg-ep-btn" onclick="selectEndpoint('count-tokens')">Count tokens</button>
-    </div>
+    <div class="pg-method-list" id="methodList"></div>
   </aside>
 
-  <!-- Center: request builder ────────────────────────────────────── -->
-  <section class="pg-center">
-
-    <div class="pg-endpoint-row">
-      <span class="http" id="pgMethod">GET</span>
-      <code class="pg-path" id="pgPath">/health</code>
-      <button class="btn btn-primary" id="sendBtn" onclick="sendRequest()">Send →</button>
-    </div>
-
-    <p class="pg-desc" id="pgDesc">Liveness check. No auth required.</p>
-
-    <div id="pgFields">
-      <!-- dynamically rendered fields -->
-    </div>
-
-  </section>
-
-  <!-- Right: response pane ───────────────────────────────────────── -->
-  <section class="pg-response">
-    <div class="pg-response-header">
-      <span class="pg-response-label">Response</span>
-      <span class="pg-status hidden" id="pgStatus"></span>
-      <span class="pg-latency hidden" id="pgLatency"></span>
-      <button class="btn btn-ghost btn-sm" id="copyRespBtn" onclick="copyResponse()" style="margin-left:auto;display:none;">Copy</button>
-    </div>
-    <div class="pg-response-body" id="pgResponseBody">
-      <span class="pg-placeholder">Hit Send to see the response.</span>
-    </div>
-  </section>
-
+  <main class="pg-main" id="methodPanel">
+    <div style="color:#6e7681;padding-top:40px;font-size:14px">Loading demo data…</div>
+  </main>
 </div>
 
-<script src="/static/js/auth.js"></script>
 <script>
-// ── Init ────────────────────────────────────────────────────────────
-const GM_BASE = window.location.origin;
-
-document.addEventListener('DOMContentLoaded', () => {
-  const stored = localStorage.getItem('gm_api_key');
-  if (stored) {
-    document.getElementById('pgApiKey').value = stored;
-    document.getElementById('pgKeyStatus').textContent = 'Key loaded';
-    document.getElementById('pgKeyStatus').classList.remove('hidden');
-  }
-  if (gmIsAuthenticated()) {
-    document.getElementById('navSignIn').style.display  = 'none';
-    document.getElementById('navSignUp').style.display  = 'none';
-  }
-  selectEndpoint('health');
-});
-
-function saveKey() {
-  const key = document.getElementById('pgApiKey').value.trim();
-  if (!key) return;
-  localStorage.setItem('gm_api_key', key);
-  const s = document.getElementById('pgKeyStatus');
-  s.textContent = '✓ Saved';
-  s.classList.remove('hidden');
-  setTimeout(() => s.classList.add('hidden'), 2000);
-}
-
-// ── Endpoint definitions ─────────────────────────────────────────────
-const ENDPOINTS = {
-  'health': {
-    method: 'GET', path: '/health',
-    desc: 'Liveness check. No auth required.',
-    fields: [],
-  },
-  'create-conversation': {
-    method: 'POST', path: '/conversations',
-    desc: 'Create a new conversation. Returns a conversation_id.',
-    fields: [
-      { id: 'meta', label: 'metadata (JSON, optional)', type: 'textarea', placeholder: '{"user_id": "u_123"}', optional: true },
-    ],
-  },
-  'list-conversations': {
-    method: 'GET', path: '/conversations',
-    desc: 'List all conversations for your API key.',
-    fields: [],
-  },
-  'conv-stats': {
-    method: 'GET', path: '/conversations/{conversation_id}/stats',
-    desc: 'Node count, edge count, topic count, graph density.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-    ],
-  },
-  'add-prompt': {
-    method: 'POST', path: '/memory/prompt',
-    desc: 'Store a user prompt. Returns a memory_id — pass to add_response to complete the node.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'content', label: 'content', type: 'textarea', placeholder: 'How does async/await work in Python?' },
-    ],
-  },
-  'add-response': {
-    method: 'POST', path: '/memory/{memory_id}/response',
-    desc: 'Attach the assistant response to a pending node. Queues embedding + graph insertion.',
-    fields: [
-      { id: 'memory_id', label: 'memory_id (path param)', type: 'text', placeholder: '9e4c3d2a-...' },
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'content', label: 'content (assistant response)', type: 'textarea', placeholder: 'async/await is built on Python coroutines...' },
-    ],
-  },
-  'recall': {
-    method: 'POST', path: '/memory/recall',
-    desc: 'Core retrieval — embeds query, runs multi-set graph traversal, returns token-budgeted context ready for your LLM.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'query', label: 'query', type: 'textarea', placeholder: 'How does async/await work?' },
-      { id: 'k', label: 'k (top-K, default 5)', type: 'number', placeholder: '5', optional: true },
-      { id: 'threshold', label: 'threshold (default 0.4)', type: 'number', placeholder: '0.4', optional: true, step: '0.1', min: '0', max: '1' },
-      { id: 'strategy', label: 'strategy', type: 'select', options: ['semantic', 'semantic_recency'], optional: true },
-      { id: 'always_include_recent', label: 'always_include_recent', type: 'number', placeholder: '2', optional: true },
-      { id: 'max_tokens', label: 'max_tokens', type: 'number', placeholder: '2000', optional: true },
-    ],
-  },
-  'get-node': {
-    method: 'GET', path: '/memory/{memory_id}',
-    desc: 'Fetch a single memory node by ID.',
-    fields: [
-      { id: 'memory_id', label: 'memory_id', type: 'text', placeholder: '9e4c3d2a-...' },
-    ],
-  },
-  'neighbours': {
-    method: 'GET', path: '/memory/{memory_id}/neighbours',
-    desc: 'Graph neighbours connected by cosine-similarity edges above the threshold.',
-    fields: [
-      { id: 'memory_id', label: 'memory_id', type: 'text', placeholder: '9e4c3d2a-...' },
-      { id: 'threshold', label: 'threshold (default 0.7)', type: 'number', placeholder: '0.7', optional: true, step: '0.1', min: '0', max: '1' },
-      { id: 'limit', label: 'limit', type: 'number', placeholder: '10', optional: true },
-    ],
-  },
-  'topics-list': {
-    method: 'GET', path: '/topics',
-    desc: 'List all topics for a conversation with label, message count, and status.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'status', label: 'status filter (optional)', type: 'select', options: ['', 'active', 'dormant', 'resolved'], optional: true },
-    ],
-  },
-  'topics-current': {
-    method: 'GET', path: '/topics/current',
-    desc: 'Returns the topic the conversation is currently in — based on the last complete message node.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'mode', label: 'mode (default centroid)', type: 'select', options: ['centroid', 'hybrid', 'llm'], optional: true },
-    ],
-  },
-  'topics-status': {
-    method: 'GET', path: '/topics/{topic_id}/status',
-    desc: 'Returns active, dormant, or resolved.',
-    fields: [
-      { id: 'topic_id', label: 'topic_id', type: 'text', placeholder: 'topic-uuid...' },
-    ],
-  },
-  'topics-summary': {
-    method: 'GET', path: '/topics/{topic_id}/summary',
-    desc: 'LLM-generated summary for the entire topic.',
-    fields: [
-      { id: 'topic_id', label: 'topic_id', type: 'text', placeholder: 'topic-uuid...' },
-    ],
-  },
-  'topics-relevance': {
-    method: 'GET', path: '/topics/relevance',
-    desc: 'Score all topics against a query. Returns top-N ranked by cosine to topic centroids.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'query', label: 'query', type: 'text', placeholder: 'How does async/await work?' },
-      { id: 'top_n', label: 'top_n (default 3)', type: 'number', placeholder: '3', optional: true },
-    ],
-  },
-  'topics-messages': {
-    method: 'GET', path: '/topics/{topic_id}/messages',
-    desc: 'All memory nodes in a topic. Narrow with a query and apply a token budget.',
-    fields: [
-      { id: 'topic_id', label: 'topic_id', type: 'text', placeholder: 'topic-uuid...' },
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'query', label: 'query (optional)', type: 'text', placeholder: 'async/await', optional: true },
-      { id: 'max_tokens', label: 'max_tokens (optional)', type: 'number', placeholder: '2000', optional: true },
-    ],
-  },
-  'topics-retrieve': {
-    method: 'POST', path: '/topics/retrieve',
-    desc: 'Full two-stage retrieval — relevance-ranks topics, then retrieves messages. Most token-efficient path.',
-    fields: [
-      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
-      { id: 'query', label: 'query', type: 'textarea', placeholder: 'How does async/await work?' },
-      { id: 'top_n', label: 'top_n (default 3)', type: 'number', placeholder: '3', optional: true },
-      { id: 'max_tokens', label: 'max_tokens (optional)', type: 'number', placeholder: '2000', optional: true },
-    ],
-  },
-  'count-tokens': {
-    method: 'POST', path: '/utils/count_tokens',
-    desc: 'Estimate token count using the same tokenizer GraphMem uses for token budgeting.',
-    fields: [
-      { id: 'text', label: 'text', type: 'textarea', placeholder: 'Paste text here to count tokens...' },
-    ],
-  },
+/* ── Config ──────────────────────────────────────────────────────── */
+const CONF = {
+  conv1: { id: '0eaf5486-63c6-4f5c-a4d8-5c761f1fa91d', label: 'Multi-topic Chat' },
+  conv2: { id: '0fd00ae3-5ffe-48f9-a3dc-6ac2e6badb16', label: 'SaaS App Build'   },
+  demoKey: 'gm_sk_nAnHUcDRqsyb6D0ggwJeLJEUZhjuC91hK2mu4Q327MU'
 };
 
-let _current = 'health';
+const state = {
+  conv: 'conv2', method: 'memory.recall',
+  cache: {
+    conv1: { nodes:[], topics:[], nodeId:null, topicId:null },
+    conv2: { nodes:[], topics:[], nodeId:null, topicId:null }
+  }
+};
 
-// ── Select endpoint ──────────────────────────────────────────────────
-function selectEndpoint(id) {
-  _current = id;
-  const ep = ENDPOINTS[id];
-  if (!ep) return;
+/* ── Helpers ─────────────────────────────────────────────────────── */
+const apiKey  = () => document.getElementById('apiKeyInput').value.trim() || CONF.demoKey;
+const convId  = () => CONF[state.conv].id;
+const cache   = () => state.cache[state.conv];
 
-  // Update active button
-  document.querySelectorAll('.pg-ep-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('onclick') === `selectEndpoint('${id}')`);
-  });
+async function apiFetch(path, opts={}) {
+  const h = { 'X-API-Key': apiKey(), 'Content-Type': 'application/json', ...(opts.headers||{}) };
+  const r = await fetch(path, { ...opts, headers: h });
+  if (!r.ok) { const t = await r.text(); throw new Error(`${r.status} — ${t}`); }
+  return r;
+}
 
-  // Header
-  const methodEl = document.getElementById('pgMethod');
-  methodEl.textContent = ep.method;
-  methodEl.className   = `http http-${ep.method.toLowerCase()}`;
-  document.getElementById('pgPath').textContent = ep.path;
-  document.getElementById('pgDesc').textContent = ep.desc;
+function hl(code) {
+  let s = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s = s.replace(/"([^"\n]*)"/g,  '<span class="cs">"$1"</span>');
+  s = s.replace(/'([^'\n]*)'/g,  "<span class=\"cs\">'$1'</span>");
+  s = s.replace(/(#[^\n]*)/g,    '<span class="cc">$1</span>');
+  s = s.replace(/\b(import|from|await|async|def|return|for|in|if|else|True|False|None|print|len|not)\b/g,
+                '<span class="ck">$1</span>');
+  s = s.replace(/\b(\d+\.?\d*)\b/g, '<span class="cn">$1</span>');
+  return s;
+}
 
-  // Fields
-  const wrap = document.getElementById('pgFields');
-  wrap.innerHTML = '';
-  ep.fields.forEach(f => {
-    const g = document.createElement('div');
-    g.className = 'pg-field-group';
-    const label = document.createElement('label');
-    label.className = 'pg-field-label';
-    label.htmlFor = `pgf-${f.id}`;
-    label.innerHTML = f.label + (f.optional ? ` <span class="optional">optional</span>` : ` <span class="required">required</span>`);
-    g.appendChild(label);
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    if (f.type === 'textarea') {
-      const ta = document.createElement('textarea');
-      ta.id = `pgf-${f.id}`;
-      ta.className = 'pg-field-input pg-field-textarea';
-      ta.placeholder = f.placeholder || '';
-      ta.rows = 3;
-      g.appendChild(ta);
-    } else if (f.type === 'select') {
-      const sel = document.createElement('select');
-      sel.id = `pgf-${f.id}`;
-      sel.className = 'pg-field-input pg-field-select';
-      f.options.forEach(opt => {
-        const o = document.createElement('option');
-        o.value = o.textContent = opt;
-        sel.appendChild(o);
+/* ── Method definitions ──────────────────────────────────────────── */
+const METHODS = [
+  /* ── MEMORY ──────────────────────────────────────────── */
+  {
+    id:'memory.recall', ns:'memory', label:'recall', badge:'POST', http:'POST /memory/recall',
+    desc:'Retrieves the k most semantically relevant memory nodes for a query using two-layer retrieval: pgvector HNSW cosine search (Layer 1) re-ranked by Neptune graph neighbourhood edges (Layer 2).',
+    usecase:'Message 51 arrives in your chatbot. Instead of sending all 50 prior exchanges — often thousands of tokens — to your LLM, call recall() to fetch only the most relevant nodes. Focused context, fraction of the cost.',
+    params:[
+      {id:'query',label:'Query',type:'text',
+       defConv1:'What cooking techniques did we discuss?',
+       defConv2:'How should I handle JWT token expiry?'},
+      {id:'k',label:'k',type:'number',def:5}
+    ],
+    code:(cid,p)=>
+`import graphmem
+
+gm = graphmem.GraphMemClient(api_key="gm_sk_...")
+
+result = gm.memory.recall(
+    conv_id="${cid}",
+    query="${p.query}",
+    k=${p.k},
+    strategy="semantic",
+)
+
+# Feed to your LLM instead of full history
+llm_context = result.context
+print(f"GraphMem: {result.token_count} tokens")`,
+    execute: async (cid,p) => {
+      const sR = await apiFetch(`/conversations/${cid}/stats`);
+      const stats = await sR.json();
+      const r = await apiFetch('/memory/recall',{
+        method:'POST',
+        body:JSON.stringify({conversation_id:cid,query:p.query,k:parseInt(p.k),strategy:'semantic'})
       });
-      g.appendChild(sel);
-    } else {
-      const inp = document.createElement('input');
-      inp.type = f.type || 'text';
-      inp.id = `pgf-${f.id}`;
-      inp.className = 'pg-field-input';
-      inp.placeholder = f.placeholder || '';
-      if (f.step) inp.step = f.step;
-      if (f.min  !== undefined) inp.min = f.min;
-      if (f.max  !== undefined) inp.max = f.max;
-      g.appendChild(inp);
+      const d = await r.json();
+      d._fullEst = (stats.node_count||50)*150;
+      return d;
+    },
+    extra:'token_savings'
+  },
+  {
+    id:'memory.add_prompt', ns:'memory', label:'add_prompt', badge:'POST', http:'POST /memory/prompt',
+    desc:'Logs a user prompt as a new pending memory node. Returns a memory_id — store it and pass to add_response() after your LLM replies to complete the node.',
+    usecase:'Your agent receives a user message. Before forwarding it to your LLM, log it with add_prompt() so every turn is captured in the memory graph. Nothing is ever lost.',
+    params:[
+      {id:'content',label:'Content',type:'text',
+       defConv1:'How do I make crème brûlée at home?',
+       defConv2:'How do I rotate refresh tokens safely?'}
+    ],
+    code:(cid,p)=>
+`memory_id = gm.memory.add_prompt(
+    conv_id="${cid}",
+    content="${p.content}",
+)
+# Save memory_id — pass it to add_response()
+print(f"Node created: {memory_id}")`,
+    execute: async (cid,p) => {
+      const r = await apiFetch('/memory/prompt',{
+        method:'POST', body:JSON.stringify({conversation_id:cid,content:p.content})
+      });
+      return r.json();
     }
-    wrap.appendChild(g);
-  });
-
-  // Reset response
-  document.getElementById('pgResponseBody').innerHTML = '<span class="pg-placeholder">Hit Send to see the response.</span>';
-  document.getElementById('pgStatus').classList.add('hidden');
-  document.getElementById('pgLatency').classList.add('hidden');
-  document.getElementById('copyRespBtn').style.display = 'none';
-}
-
-// ── Send request ─────────────────────────────────────────────────────
-async function sendRequest() {
-  const ep     = ENDPOINTS[_current];
-  const apiKey = document.getElementById('pgApiKey').value.trim() || localStorage.getItem('gm_api_key') || '';
-  const btn    = document.getElementById('sendBtn');
-  const body_el = document.getElementById('pgResponseBody');
-
-  btn.innerHTML = '<span class="spinner"></span>';
-  btn.disabled  = true;
-  body_el.innerHTML = '<span class="pg-placeholder">Sending…</span>';
-  document.getElementById('pgStatus').classList.add('hidden');
-  document.getElementById('pgLatency').classList.add('hidden');
-
-  // Gather field values
-  const vals = {};
-  ep.fields.forEach(f => {
-    const el = document.getElementById(`pgf-${f.id}`);
-    if (el) vals[f.id] = el.value;
-  });
-
-  // Build URL + body
-  let path = ep.path;
-  let bodyObj = null;
-  let queryParams = new URLSearchParams();
-
-  // Handle path params
-  ['memory_id','conversation_id','topic_id'].forEach(p => {
-    if (vals[p] && path.includes(`{${p}}`)) {
-      path = path.replace(`{${p}}`, encodeURIComponent(vals[p].trim()));
-      delete vals[p];
+  },
+  {
+    id:'memory.add_response', ns:'memory', label:'add_response', badge:'POST', http:'POST /memory/{memory_id}/response',
+    desc:'Attaches your LLM\'s response to a pending node, marking it complete. Triggers the async pipeline: embedding computation → Neptune edge creation → topic recompute queue.',
+    usecase:'Your LLM has replied. Call add_response() to seal the node. The node worker queues embedding computation immediately — this turn becomes searchable via recall() within seconds.',
+    params:[
+      {id:'content',label:'Response',type:'text',
+       defConv1:'Crème brûlée requires a kitchen torch for the caramelized sugar top. Use heavy cream, not milk.',
+       defConv2:'On each use of the refresh token, issue a brand new one and invalidate the old one (rotation pattern).'}
+    ],
+    code:(cid,p)=>
+`# memory_id came from add_prompt()
+gm.memory.add_response(
+    memory_id=memory_id,
+    conv_id="${cid}",
+    content=llm_response,
+)
+# Node is now complete — embedding + graph edges queued`,
+    execute: async (cid,p) => {
+      const pR = await apiFetch('/memory/prompt',{
+        method:'POST', body:JSON.stringify({conversation_id:cid,content:'Demo prompt for add_response example'})
+      });
+      const {memory_id} = await pR.json();
+      const r = await apiFetch(`/memory/${memory_id}/response`,{
+        method:'POST', body:JSON.stringify({conversation_id:cid,content:p.content})
+      });
+      return {memory_id, ...(await r.json())};
     }
-  });
+  },
+  {
+    id:'memory.get', ns:'memory', label:'get', badge:'GET', http:'GET /memory/{memory_id}',
+    desc:'Fetches a single memory node by ID — prompt, response, status, timestamps, and metadata.',
+    usecase:'You stored a memory_id alongside a session. Retrieve it later to inspect what was logged, verify embedding status (status: complete means it\'s in the graph), or display the original exchange to the user.',
+    params:[{id:'memory_id',label:'memory_id',type:'cache_node'}],
+    code:(cid,p,c)=>
+`node = gm.memory.get(memory_id="${c.nodeId||'<memory_id>'}")
 
-  // Build body or query
-  if (ep.method === 'POST') {
-    bodyObj = {};
-    ep.fields.forEach(f => {
-      const v = vals[f.id];
-      if (v === undefined || v === '') return;
-      if (path.includes(`{${f.id}}`)) return; // already in path
+print(node["prompt"])
+print(node["response"])
+print(node["status"])   # "complete" once embedded and in graph`,
+    execute: async (cid,p,c) => {
+      if (!c.nodeId) throw new Error('No nodes cached. Wait for embedding to complete and refresh.');
+      const r = await apiFetch(`/memory/${c.nodeId}`);
+      return r.json();
+    }
+  },
+  {
+    id:'memory.get_neighbours', ns:'memory', label:'get_neighbours', badge:'GET', http:'GET /memory/{memory_id}/neighbours',
+    desc:'Returns memory nodes semantically adjacent to a given node in the Neptune cosine similarity graph, ranked by edge weight.',
+    usecase:'"Show me more context around this message." get_neighbours() follows Neptune graph edges — surfaces all semantically related exchanges regardless of when they occurred in the conversation.',
+    params:[
+      {id:'memory_id',label:'memory_id',type:'cache_node'},
+      {id:'threshold',label:'Threshold',type:'number',def:0.7}
+    ],
+    code:(cid,p,c)=>
+`neighbours = gm.memory.get_neighbours(
+    memory_id="${c.nodeId||'<memory_id>'}",
+    threshold=${p.threshold},
+    limit=10,
+    order="relevance",
+)
+for n in neighbours:
+    print(f"[{n['edge_weight']:.2f}] {n['prompt'][:80]}")`,
+    execute: async (cid,p,c) => {
+      if (!c.nodeId) throw new Error('No nodes cached. Wait for embedding to complete and refresh.');
+      const r = await apiFetch(`/memory/${c.nodeId}/neighbours?threshold=${p.threshold}&limit=10&order=relevance`);
+      return r.json();
+    }
+  },
+  {
+    id:'memory.add_batch', ns:'memory', label:'add_batch', badge:'POST', http:'POST /memory/batch',
+    desc:'Bulk-inserts up to 100 complete prompt+response pairs in one request. All items are marked complete immediately and queued for embedding.',
+    usecase:'Onboarding a user who already has chat history in your existing system. Instead of 200 individual API calls, batch-import their entire history and let GraphMem build the semantic graph asynchronously.',
+    params:[],
+    code:(cid)=>
+`memory_ids = gm.memory.add_batch(items=[
+    {
+        "conversation_id": "${cid}",
+        "prompt": "What's the difference between stateless and stateful auth?",
+        "response": "Stateless auth (JWT) stores session in the token — no server-side state.",
+    },
+    {
+        "conversation_id": "${cid}",
+        "prompt": "Which is better for microservices?",
+        "response": "Stateless JWT scales horizontally without a shared session store.",
+    },
+    {
+        "conversation_id": "${cid}",
+        "prompt": "What are the key security trade-offs?",
+        "response": "JWT can't be revoked before expiry without a token denylist.",
+    },
+])
+print(f"Imported {len(memory_ids)} nodes")`,
+    execute: async (cid) => {
+      const r = await apiFetch('/memory/batch',{
+        method:'POST',
+        body:JSON.stringify({items:[
+          {conversation_id:cid,prompt:"What's the difference between stateless and stateful auth?",response:"Stateless auth (JWT) stores session in the token — no server-side state needed."},
+          {conversation_id:cid,prompt:"Which is better for microservices?",response:"Stateless JWT scales horizontally without a shared session store."},
+          {conversation_id:cid,prompt:"What are the key security trade-offs?",response:"JWT can't be revoked before expiry without a token denylist or short TTLs."}
+        ]})
+      });
+      return r.json();
+    }
+  },
 
-      if (f.id === 'meta') {
-        try { bodyObj['metadata'] = JSON.parse(v); } catch { bodyObj['metadata'] = {}; }
-      } else if (f.type === 'number') {
-        const n = parseFloat(v);
-        if (!isNaN(n)) bodyObj[f.id] = n;
-      } else {
-        bodyObj[f.id] = v.trim();
-      }
-    });
-  } else {
-    // GET — leftover non-path fields → query params
-    ep.fields.forEach(f => {
-      if (path.includes(`{${f.id}}`)) return;
-      const v = vals[f.id];
-      if (v !== undefined && v !== '') queryParams.set(f.id, v.trim());
+  /* ── CONVERSATIONS ────────────────────────────────────── */
+  {
+    id:'conversations.create', ns:'conversations', label:'create', badge:'POST', http:'POST /conversations',
+    desc:'Creates a new empty conversation context and returns a conversation_id. Store this ID tied to your user or session.',
+    usecase:'A new user signs up or starts a fresh chat. Call create() to provision an isolated memory context for them — all future add_prompt / recall calls reference this ID.',
+    params:[],
+    code:()=>
+`conv_id = gm.conversations.create()
+
+# Persist tied to your user session
+db.save(user_id=current_user.id, conv_id=conv_id)
+print(f"Ready: {conv_id}")`,
+    execute: async () => {
+      const r = await apiFetch('/conversations',{method:'POST',body:JSON.stringify({})});
+      return r.json();
+    }
+  },
+  {
+    id:'conversations.list', ns:'conversations', label:'list', badge:'GET', http:'GET /conversations',
+    desc:'Lists all conversations for your API key, ordered newest first, with node count and last topic recompute timestamp.',
+    usecase:'Admin dashboard or observability view — see all active agent sessions, how many memory nodes each has accumulated, and when topics were last clustered.',
+    params:[],
+    code:()=>
+`convs = gm.conversations.list()
+
+for c in convs:
+    print(f"{c['conversation_id'][:8]}…  nodes={c['node_count']}")`,
+    execute: async () => {
+      const r = await apiFetch('/conversations');
+      return r.json();
+    }
+  },
+  {
+    id:'conversations.get_stats', ns:'conversations', label:'get_stats', badge:'GET', http:'GET /conversations/{conv_id}/stats',
+    desc:'Returns conversation health: node count, topic count, dirty topics pending recompute, first/last activity timestamps, and embedding coverage.',
+    usecase:'Before choosing a retrieval strategy, check conversation size. If node_count > 20, use recall(). For a fresh 3-message conversation, send the full history directly — recall adds latency for tiny contexts.',
+    params:[],
+    code:(cid)=>
+`stats = gm.conversations.get_stats(conv_id="${cid}")
+
+print(f"Nodes:  {stats['node_count']}")
+print(f"Topics: {stats['topic_count']}")
+
+# Adaptive retrieval strategy
+if stats["node_count"] > 20:
+    context = gm.memory.recall(conv_id, query=user_query, k=5)
+else:
+    context = gm.conversations.export(conv_id)`,
+    execute: async (cid) => {
+      const r = await apiFetch(`/conversations/${cid}/stats`);
+      return r.json();
+    }
+  },
+  {
+    id:'conversations.export', ns:'conversations', label:'export', badge:'GET', http:'GET /conversations/{conv_id}/export',
+    desc:'Exports all memory nodes ordered by index — full prompt, response, timestamps, and metadata for every turn.',
+    usecase:'Build a fine-tuning dataset from your agent sessions, generate a readable transcript for the user, or run offline analytics on topic distribution across the conversation.',
+    params:[],
+    code:(cid)=>
+`nodes = gm.conversations.export(conv_id="${cid}")
+print(f"Exported {len(nodes)} nodes")
+
+# Build fine-tuning pairs
+dataset = [
+    {"prompt": n["prompt"], "completion": n["response"]}
+    for n in nodes
+]`,
+    execute: async (cid) => {
+      const r = await apiFetch(`/conversations/${cid}/export`);
+      return r.json();
+    }
+  },
+  {
+    id:'conversations.delete', ns:'conversations', label:'delete', badge:'DELETE', http:'DELETE /conversations/{conv_id}',
+    desc:'Permanently deletes a conversation and all its memory nodes, topics, and Neptune graph edges. Irreversible. This demo creates a temp conversation then deletes it.',
+    usecase:'A user deletes their account or a session expires. Clean up all associated memory — GDPR compliance, storage hygiene, or retiring expired agent sessions.',
+    params:[],
+    code:()=>
+`# Hard-delete a conversation and all its graph data
+gm.conversations.delete(conv_id=expired_session_conv_id)`,
+    execute: async () => {
+      const cr = await apiFetch('/conversations',{method:'POST',body:JSON.stringify({})});
+      const {conversation_id} = await cr.json();
+      await apiFetch(`/conversations/${conversation_id}`,{method:'DELETE'});
+      return {deleted:conversation_id, status:'ok'};
+    }
+  },
+
+  /* ── TOPICS ───────────────────────────────────────────── */
+  {
+    id:'topics.list_all', ns:'topics', label:'list_all', badge:'GET', http:'GET /topics?conversation_id=',
+    desc:'Returns all topic clusters discovered via Louvain community detection — labels, descriptions, coherence scores, member message IDs, and status (active / dormant / resolved).',
+    usecase:'Build a "conversation map" feature. Show users exactly what their AI assistant has covered, with message counts per cluster. Multi-topic conversations become instantly navigable.',
+    params:[],
+    code:(cid)=>
+`topics = gm.topics.list_all(conv_id="${cid}")
+
+for t in topics:
+    print(f"[{t['status']}] {t['label']}")
+    print(f"  {len(t['message_ids'])} messages, coherence={t['coherence']:.2f}")`,
+    execute: async (cid) => {
+      const r = await apiFetch(`/topics?conversation_id=${cid}`);
+      return r.json();
+    }
+  },
+  {
+    id:'topics.get_current', ns:'topics', label:'get_current', badge:'GET', http:'GET /topics/current?conversation_id=',
+    desc:'Identifies the currently active topic based on recent messages\' embedding centroid proximity. Supports centroid, hybrid, and LLM detection modes.',
+    usecase:'Your agent receives a message. Before calling your LLM, check the current topic to pick the right system prompt or route to a specialist sub-agent — a coding assistant needs very different context than a travel planner.',
+    params:[
+      {id:'mode',label:'Mode',type:'select',options:['centroid','hybrid'],def:'centroid'}
+    ],
+    code:(cid,p)=>
+`current = gm.topics.get_current(
+    conv_id="${cid}",
+    mode="${p.mode}",
+)
+
+# Route to specialist agent based on current topic
+if current["label"] == "payments":
+    agent = StripeExpertAgent()
+elif current["label"] == "authentication":
+    agent = AuthExpertAgent()`,
+    execute: async (cid,p) => {
+      const r = await apiFetch(`/topics/current?conversation_id=${cid}&mode=${p.mode}`);
+      return r.json();
+    }
+  },
+  {
+    id:'topics.retrieve', ns:'topics', label:'retrieve', badge:'POST', http:'POST /topics/retrieve',
+    desc:'Two-stage retrieval: first identifies the most relevant topic cluster for the query, then retrieves the best nodes from within that cluster. Higher precision than flat recall().',
+    usecase:'The user asks about Stripe. retrieve() first finds the "payments" topic cluster, then pulls the most relevant nodes from within it — topic-scoped context means zero noise from unrelated topics.',
+    params:[
+      {id:'query',label:'Query',type:'text',
+       defConv1:'What travel tips did we cover?',
+       defConv2:'Stripe webhook signature verification'},
+      {id:'top_n',label:'top_n',type:'number',def:3}
+    ],
+    code:(cid,p)=>
+`result = gm.topics.retrieve(
+    conv_id="${cid}",
+    query="${p.query}",
+    top_n=${p.top_n},
+)
+
+print(f"Topic matched: {result['matched_topic']['label']}")
+print(f"Nodes returned: {len(result['nodes'])}")
+print(f"Token count: {result['token_count']}")`,
+    execute: async (cid,p) => {
+      const r = await apiFetch('/topics/retrieve',{
+        method:'POST',
+        body:JSON.stringify({conversation_id:cid,query:p.query,top_n:parseInt(p.top_n)})
+      });
+      return r.json();
+    }
+  },
+  {
+    id:'topics.relevance', ns:'topics', label:'relevance', badge:'GET', http:'GET /topics/relevance?conversation_id=&query=',
+    desc:'Scores every topic cluster against a query and returns them ranked by cosine similarity to their centroids.',
+    usecase:'Before choosing a retrieval path, score all topics. Route to a specialized path for high-scoring topics (>0.8) or fall back to broad recall() for low-confidence queries.',
+    params:[
+      {id:'query',label:'Query',type:'text',
+       defConv1:'cooking and French cuisine',
+       defConv2:'React and frontend state management'}
+    ],
+    code:(cid,p)=>
+`scores = gm.topics.relevance(
+    conv_id="${cid}",
+    query="${p.query}",
+    top_n=5,
+)
+for s in scores:
+    print(f"{s['label']}: {s['score']:.3f}")`,
+    execute: async (cid,p) => {
+      const r = await apiFetch(`/topics/relevance?conversation_id=${cid}&query=${encodeURIComponent(p.query)}&top_n=5`);
+      return r.json();
+    }
+  },
+  {
+    id:'topics.get_info', ns:'topics', label:'get_info', badge:'GET', http:'GET /topics/{topic_id}',
+    desc:'Returns full metadata for a topic cluster: label, description, coherence, sub-themes, message IDs, centroid vector norm, and status.',
+    usecase:'Inspect a specific cluster after list_all() returns its ID. Use the description and sub-themes to decide whether to surface this topic\'s summary to the user or inject it as context.',
+    params:[{id:'topic_id',label:'topic_id',type:'cache_topic'}],
+    code:(cid,p,c)=>
+`topic = gm.topics.get_info(topic_id="${c.topicId||'<topic_id>'}")
+
+print(f"Label:       {topic['label']}")
+print(f"Description: {topic['description']}")
+print(f"Sub-themes:  {topic['sub_themes']}")
+print(f"Coherence:   {topic['coherence']:.2f}")`,
+    execute: async (cid,p,c) => {
+      if (!c.topicId) throw new Error('No topics yet — wait ~30s for topic worker to process, then refresh the page.');
+      const r = await apiFetch(`/topics/${c.topicId}`);
+      return r.json();
+    }
+  },
+  {
+    id:'topics.get_summary', ns:'topics', label:'get_summary', badge:'GET', http:'GET /topics/{topic_id}/summary',
+    desc:'Returns an LLM-generated natural-language summary of everything discussed within a topic cluster. Condensed long-term memory in paragraph form.',
+    usecase:'A returning user picks up from last week. Instead of replaying 30 messages about authentication, inject the auth topic\'s summary as "past context" in your system prompt — 30 exchanges in one paragraph.',
+    params:[{id:'topic_id',label:'topic_id',type:'cache_topic'}],
+    code:(cid,p,c)=>
+`summary = gm.topics.get_summary(topic_id="${c.topicId||'<topic_id>'}")
+
+# Inject as past context in your LLM system prompt
+system_prompt = f"""You are a helpful assistant.
+Past context: {summary['summary']}
+"""`,
+    execute: async (cid,p,c) => {
+      if (!c.topicId) throw new Error('No topics yet — wait ~30s for topic worker to process, then refresh the page.');
+      const r = await apiFetch(`/topics/${c.topicId}/summary`);
+      return r.json();
+    }
+  },
+  {
+    id:'topics.get_messages', ns:'topics', label:'get_messages', badge:'GET', http:'GET /topics/{topic_id}/messages',
+    desc:'Retrieves all memory nodes belonging to a specific topic cluster, optionally ranked by query relevance within the cluster.',
+    usecase:'"Go back to what we discussed about payments." Use list_all() to find the payments topic_id, then get_messages() to pull every node from that cluster — full topic replay with optional query ranking.',
+    params:[
+      {id:'topic_id',label:'topic_id',type:'cache_topic'},
+      {id:'query',label:'Query (opt)',type:'text',
+       defConv1:'',defConv2:'webhook signature'}
+    ],
+    code:(cid,p,c)=>
+`result = gm.topics.get_messages(
+    topic_id="${c.topicId||'<topic_id>'}",
+    conv_id="${cid}",
+    query="${p.query||''}",
+)
+print(f"{len(result['nodes'])} messages in this topic")`,
+    execute: async (cid,p,c) => {
+      if (!c.topicId) throw new Error('No topics yet — wait ~30s for topic worker to process, then refresh the page.');
+      let url = `/topics/${c.topicId}/messages?conversation_id=${cid}`;
+      if (p.query) url += `&query=${encodeURIComponent(p.query)}`;
+      const r = await apiFetch(url);
+      return r.json();
+    }
+  },
+  {
+    id:'topics.recompute', ns:'topics', label:'recompute', badge:'POST', http:'POST /topics/recompute?conversation_id=',
+    desc:'Forces a full Louvain re-clustering for the conversation. Accepts 202 immediately; clustering runs async.',
+    usecase:'You just bulk-imported 50 historical messages. The existing topic clusters are stale. Call recompute() to re-run clustering and refresh all topic labels, centroids, and edge weights.',
+    params:[],
+    code:(cid)=>
+`# After bulk import or major conversation shift
+gm.topics.recompute(conv_id="${cid}")
+print("Topic recompute queued — updated in ~10s")`,
+    execute: async (cid) => {
+      const r = await apiFetch(`/topics/recompute?conversation_id=${cid}`,{method:'POST'});
+      return r.json();
+    }
+  },
+
+  /* ── AUTH ─────────────────────────────────────────────── */
+  {
+    id:'auth.create_key', ns:'auth', label:'create_key', badge:'POST', jwt:true, http:'POST /auth/keys',
+    desc:'Creates a new API key tied to your Cognito account. Requires a Cognito IdToken (JWT Bearer), not an existing API key. The full key is returned once only — store it immediately.',
+    usecase:'A user completes sign-up. After Cognito authentication, call create_key() to provision their gm_sk_… API key — what they\'ll paste into their application code.',
+    params:[],
+    code:()=>
+`# Requires Cognito IdToken — obtained from the login flow
+key = gm.auth.create_key(
+    jwt_token=cognito_id_token,
+    project_name="my-agent",
+)
+# Save this immediately — shown only once!
+print(f"Key: {key['key']}")`,
+    execute:null
+  },
+  {
+    id:'auth.list_keys', ns:'auth', label:'list_keys', badge:'GET', jwt:true, http:'GET /auth/keys',
+    desc:'Lists all API keys for the authenticated Cognito user. Returns prefixes, project names, permissions, and last-used timestamps. Full keys are never returned.',
+    usecase:'Show your signed-in user a key management dashboard — list their keys, see which project each belongs to, and when it was last used.',
+    params:[],
+    code:()=>
+`keys = gm.auth.list_keys(jwt_token=cognito_id_token)
+
+for k in keys:
+    print(f"{k['key_prefix']}…  project={k['project_name']}  last_used={k['last_used_at']}")`,
+    execute:null
+  },
+  {
+    id:'auth.revoke_key', ns:'auth', label:'revoke_key', badge:'DELETE', jwt:true, http:'DELETE /auth/keys/{key_id}',
+    desc:'Deactivates an API key immediately. All subsequent requests using the revoked key receive 401. Requires the key_id from list_keys().',
+    usecase:'A key is compromised or a team member leaves. Call revoke_key() to instantly cut off access without deleting any conversation data.',
+    params:[],
+    code:()=>
+`gm.auth.revoke_key(
+    jwt_token=cognito_id_token,
+    key_id="e23fb4be-7db3-482c-...",
+)
+print("Key revoked — access terminated immediately")`,
+    execute:null
+  },
+
+  /* ── UTILS ────────────────────────────────────────────── */
+  {
+    id:'utils.count_tokens', ns:'utils', label:'count_tokens', badge:'POST', http:'POST /utils/count_tokens',
+    desc:'Counts tokens in any text using the same cl100k_base tokenizer GraphMem uses for token budgeting. Use it to measure exactly how much context you\'re saving.',
+    usecase:'After recall() returns context, count its tokens and compare to your full history estimate. Quantify the savings before you pass context to your LLM.',
+    params:[
+      {id:'text',label:'Text',type:'textarea',
+       defConv1:'Caramelizing onions requires patience — medium-low heat for 45 minutes, stirring occasionally. Add a pinch of baking soda to accelerate the Maillard reaction without burning.',
+       defConv2:'JWT access tokens should be short-lived (15 minutes). Use httpOnly cookies for refresh tokens to prevent XSS. Rotate refresh tokens on every use to detect theft via reuse detection.'}
+    ],
+    code:(cid,p)=>
+`result = gm.utils.count_tokens(text=context_text)
+print(f"Token count: {result['token_count']}")
+
+# Compare to full history estimate
+stats    = gm.conversations.get_stats(conv_id)
+full_est = stats["node_count"] * 150
+savings  = (1 - result["token_count"] / full_est) * 100
+print(f"Saved ~{savings:.0f}% vs sending full history")`,
+    execute: async (cid,p) => {
+      const r = await apiFetch('/utils/count_tokens',{
+        method:'POST', body:JSON.stringify({text:p.text})
+      });
+      return r.json();
+    }
+  },
+  {
+    id:'utils.health', ns:'utils', label:'health', badge:'GET', http:'GET /health',
+    desc:'API liveness check. No authentication required. Returns {status: "ok"} when the service is up.',
+    usecase:'Add to your uptime monitor. If this returns non-200, alert on-call — GraphMem is down and your agents are losing memory context.',
+    params:[],
+    code:()=>
+`status = gm.utils.health()
+print(status)  # {"status": "ok"}`,
+    execute: async () => {
+      const r = await fetch('/health');
+      return r.json();
+    }
+  }
+];
+
+/* ── Sidebar ──────────────────────────────────────────────────────── */
+function renderSidebar() {
+  const order  = ['memory','conversations','topics','auth','utils'];
+  const labels = {memory:'Memory',conversations:'Conversations',topics:'Topics',auth:'Auth',utils:'Utils'};
+  let html = '';
+  for (const ns of order) {
+    html += `<div class="pg-ns-head">${labels[ns]}</div>`;
+    METHODS.filter(m=>m.ns===ns).forEach(m=>{
+      const jt = m.jwt ? ' <span class="jwt-tag">JWT</span>' : '';
+      html += `<div class="pg-item${m.id===state.method?' active':''}" onclick="selectMethod('${m.id}')">${m.label}${jt}</div>`;
     });
   }
+  document.getElementById('methodList').innerHTML = html;
+}
 
-  const qs = queryParams.toString();
-  const url = `${GM_BASE}${path}${qs ? '?' + qs : ''}`;
+/* ── Panel rendering ──────────────────────────────────────────────── */
+function renderParamInput(pr) {
+  const c = cache();
+  if (pr.type === 'cache_node') {
+    const v = c.nodeId || '(loading…)';
+    return `<div class="param-row"><span class="param-label">${pr.label}</span><span class="param-id">${v}</span></div>`;
+  }
+  if (pr.type === 'cache_topic') {
+    const v = c.topicId || '(no topics yet — wait ~30s)';
+    return `<div class="param-row"><span class="param-label">${pr.label}</span><span class="param-id">${v}</span></div>`;
+  }
+  if (pr.type === 'select') {
+    const opts = pr.options.map(o=>`<option${o===(pr.def||pr.options[0])?' selected':''}>${o}</option>`).join('');
+    return `<div class="param-row"><span class="param-label">${pr.label}</span><select class="param-input" id="p_${pr.id}" onchange="refreshCode()">${opts}</select></div>`;
+  }
+  if (pr.type === 'textarea') {
+    const v = escHtml(state.conv==='conv1' ? (pr.defConv1||'') : (pr.defConv2||''));
+    return `<div class="param-row" style="align-items:flex-start"><span class="param-label" style="padding-top:8px">${pr.label}</span><textarea class="param-input" id="p_${pr.id}" rows="3" style="resize:vertical" oninput="refreshCode()">${v}</textarea></div>`;
+  }
+  const v = state.conv==='conv1'
+    ? (pr.defConv1!==undefined ? pr.defConv1 : (pr.def!==undefined?pr.def:''))
+    : (pr.defConv2!==undefined ? pr.defConv2 : (pr.def!==undefined?pr.def:''));
+  return `<div class="param-row"><span class="param-label">${pr.label}</span><input class="param-input" id="p_${pr.id}" type="${pr.type||'text'}" value="${escHtml(String(v))}" oninput="refreshCode()"/></div>`;
+}
 
-  const headers = { 'Content-Type': 'application/json' };
-  if (apiKey) headers['X-API-Key'] = apiKey;
+function collectParams(m) {
+  const p={}, c=cache();
+  (m.params||[]).forEach(pr=>{
+    if (pr.type==='cache_node')  { p[pr.id]=c.nodeId;  return; }
+    if (pr.type==='cache_topic') { p[pr.id]=c.topicId; return; }
+    const el=document.getElementById(`p_${pr.id}`);
+    p[pr.id]=el?el.value:'';
+  });
+  return p;
+}
 
-  const t0 = performance.now();
-  let status = 0;
+function refreshCode() {
+  const m=METHODS.find(x=>x.id===state.method);
+  if (!m) return;
+  const el=document.getElementById('codeDisplay');
+  if (el) el.innerHTML=hl(m.code(convId(),collectParams(m),cache()));
+}
 
+function renderPanel(m) {
+  const jwtBlock = m.jwt ? `<div class="jwt-notice">⚠️ <strong>Requires Cognito JWT</strong> — use <code>Authorization: Bearer &lt;IdToken&gt;</code>, not an API key. Obtain via Cognito login. Run is disabled here.</div>` : '';
+  const paramsHtml = (m.params||[]).length ? `<div class="params-wrap">${m.params.map(renderParamInput).join('')}</div>` : '';
+  const btnOff = (m.jwt||!m.execute) ? ' disabled' : '';
+
+  document.getElementById('methodPanel').innerHTML = `
+    <h1 class="method-title">gm.${m.ns}.<span style="color:#00d97e">${m.label}</span><span class="badge b-${m.badge}">${m.badge}</span></h1>
+    <p class="method-http">${m.http}</p>
+    <p class="method-desc">${m.desc}</p>
+    <div class="usecase-box"><div class="uc-label">💡 Use Case</div><p class="uc-text">${m.usecase}</p></div>
+    <div class="sec-label">Code Example</div>
+    <pre class="code-block" id="codeDisplay">${hl(m.code(convId(),collectParams(m),cache()))}</pre>
+    ${paramsHtml}
+    ${jwtBlock}
+    <button class="run-btn" id="runBtn" onclick="runMethod()"${btnOff}><span>▶ Run</span></button>
+    <div class="sec-label">Output</div>
+    <div class="output-panel idle" id="outputPanel">Click ▶ Run to execute</div>
+    <div id="extraOut"></div>`;
+}
+
+function selectMethod(id) {
+  state.method=id;
+  renderSidebar();
+  const m=METHODS.find(x=>x.id===id);
+  if (m) renderPanel(m);
+}
+
+function switchConv(key) {
+  state.conv=key;
+  selectMethod(state.method);
+}
+
+/* ── Run ──────────────────────────────────────────────────────────── */
+async function runMethod() {
+  const m=METHODS.find(x=>x.id===state.method);
+  if (!m||!m.execute) return;
+  const btn=document.getElementById('runBtn');
+  const out=document.getElementById('outputPanel');
+  const extra=document.getElementById('extraOut');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Running…';
+  out.className='output-panel idle'; out.textContent='Running…'; extra.innerHTML='';
   try {
-    const resp = await fetch(url, {
-      method:  ep.method,
-      headers,
-      body:    bodyObj ? JSON.stringify(bodyObj) : undefined,
-    });
-    status = resp.status;
-    const elapsed = Math.round(performance.now() - t0);
-
-    let text;
-    try {
-      const json = await resp.json();
-      text = JSON.stringify(json, null, 2);
-    } catch {
-      text = await resp.text();
-    }
-
-    renderResponse(text, status, elapsed);
-  } catch (err) {
-    const elapsed = Math.round(performance.now() - t0);
-    renderResponse(`Network error: ${err.message}`, 0, elapsed);
+    const data=await m.execute(convId(),collectParams(m),cache());
+    out.className='output-panel';
+    out.textContent=JSON.stringify(data,null,2);
+    if (m.extra==='token_savings' && data.token_count!==undefined) renderTokenSavings(data,extra);
+  } catch(e) {
+    out.className='output-panel err'; out.textContent=e.message;
   } finally {
-    btn.textContent = 'Send →';
-    btn.disabled    = false;
+    btn.disabled=false; btn.innerHTML='<span>▶ Run</span>';
   }
 }
 
-function renderResponse(text, status, ms) {
-  const statusEl  = document.getElementById('pgStatus');
-  const latencyEl = document.getElementById('pgLatency');
-  const bodyEl    = document.getElementById('pgResponseBody');
-  const copyBtn   = document.getElementById('copyRespBtn');
-
-  statusEl.textContent = status ? `${status}` : 'ERR';
-  statusEl.className   = `pg-status ${status >= 200 && status < 300 ? 'ok' : 'err'}`;
-  statusEl.classList.remove('hidden');
-
-  latencyEl.textContent = `${ms}ms`;
-  latencyEl.classList.remove('hidden');
-
-  bodyEl.innerHTML = `<pre>${escHtml(text)}</pre>`;
-  copyBtn.style.display = '';
-
-  window._pgLastResp = text;
+function renderTokenSavings(data,container) {
+  const gm=data.token_count||0;
+  const full=data._fullEst||7500;
+  const pct=Math.max(0,Math.min(100,Math.round((1-gm/full)*100)));
+  const gmPct=Math.round((gm/full)*100);
+  container.innerHTML=`
+    ${data.context?`<div class="context-label">Context passed to your LLM</div><div class="context-box">${escHtml(data.context)}</div>`:''}
+    <div class="token-savings">
+      <div class="ts-title">Token Savings vs Full History</div>
+      <div class="ts-row">
+        <div class="ts-row-label"><span>Full history (estimated)</span><span>${full.toLocaleString()} tokens</span></div>
+        <div class="ts-track"><div class="ts-fill" style="width:100%;background:#d1fae5;color:#065f46"> </div></div>
+      </div>
+      <div class="ts-row">
+        <div class="ts-row-label"><span>GraphMem recall output</span><span>${gm.toLocaleString()} tokens</span></div>
+        <div class="ts-track"><div class="ts-fill" style="width:${gmPct}%">${gmPct>15?gmPct+'%':''}</div></div>
+      </div>
+      <div class="ts-savings">🎯 ${pct}% token reduction — same relevant context, far lower cost</div>
+    </div>`;
 }
 
-function copyResponse() {
-  if (window._pgLastResp) {
-    navigator.clipboard.writeText(window._pgLastResp);
-    document.getElementById('copyRespBtn').textContent = 'Copied!';
-    setTimeout(() => document.getElementById('copyRespBtn').textContent = 'Copy', 2000);
+/* ── Init ─────────────────────────────────────────────────────────── */
+async function init() {
+  document.getElementById('apiKeyInput').value=CONF.demoKey;
+  for (const [key,conv] of [['conv1',CONF.conv1],['conv2',CONF.conv2]]) {
+    try {
+      const [nR,tR]=await Promise.all([
+        apiFetch(`/conversations/${conv.id}/export`),
+        apiFetch(`/topics?conversation_id=${conv.id}`)
+      ]);
+      const nodes=await nR.json(), topics=await tR.json();
+      const nArr=Array.isArray(nodes)?nodes:[];
+      const tArr=Array.isArray(topics)?topics:[];
+      state.cache[key]={
+        nodes:nArr, topics:tArr,
+        nodeId: nArr.find(n=>n.status==='complete')?.memory_id||nArr[0]?.memory_id||null,
+        topicId: tArr[0]?.topic_id||null
+      };
+    } catch(e){ console.warn('cache fail',key,e.message); }
   }
+  renderSidebar();
+  selectMethod('memory.recall');
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+init();
 </script>
 </body>
 </html>
