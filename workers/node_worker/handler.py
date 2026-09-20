@@ -50,21 +50,28 @@ def get_neptune():
 # ── Jina embedding ────────────────────────────────────────────────────────────
 
 def embed(text: str) -> np.ndarray:
-    resp = httpx.post(
-        "https://api.jina.ai/v1/embeddings",
-        headers={"Authorization": f"Bearer {os.environ['JINA_API_KEY']}"},
-        json={
-            "model": "jina-embeddings-v4",
-            "input": [text],
-            "task": "retrieval.passage",
-            "dimensions": 1024,
-        },
-        timeout=30.0,
-    )
-    resp.raise_for_status()
-    vec = np.array(resp.json()["data"][0]["embedding"], dtype=np.float32)
-    # Normalise to unit vector — ensures pgvector cosine distance = 1 - cosine_similarity
-    return vec / np.linalg.norm(vec)
+    import time
+    for attempt in range(5):
+        resp = httpx.post(
+            "https://api.jina.ai/v1/embeddings",
+            headers={"Authorization": f"Bearer {os.environ['JINA_API_KEY']}"},
+            json={
+                "model": "jina-embeddings-v4",
+                "input": [text],
+                "task": "retrieval.passage",
+                "dimensions": 1024,
+            },
+            timeout=30.0,
+        )
+        if resp.status_code == 429:
+            wait = 2 ** attempt
+            print(f"[node_worker] Jina 429 — retrying in {wait}s (attempt {attempt+1}/5)")
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        vec = np.array(resp.json()["data"][0]["embedding"], dtype=np.float32)
+        return vec / np.linalg.norm(vec)
+    raise Exception("Jina embed failed after 5 retries (rate limited)")
 
 
 # ── Neptune helpers ───────────────────────────────────────────────────────────
