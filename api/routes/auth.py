@@ -131,6 +131,35 @@ async def cognito_signin(body: SignInRequest):
     }
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+    email: str  # needed to compute SECRET_HASH against client secret
+
+
+@router.post("/refresh", status_code=200)
+async def cognito_refresh(body: RefreshRequest):
+    c = _cognito_client()
+    params: dict = {"REFRESH_TOKEN": body.refresh_token}
+    h = _secret_hash(body.email)
+    if h:
+        params["SECRET_HASH"] = h
+    try:
+        resp = c.initiate_auth(
+            ClientId=settings.cognito_client_id,
+            AuthFlow="REFRESH_TOKEN_AUTH",
+            AuthParameters=params,
+        )
+    except ClientError as e:
+        raise _cognito_error(e)
+    t = resp["AuthenticationResult"]
+    # Cognito does not return a new refresh_token on REFRESH_TOKEN_AUTH — old one stays valid
+    return {
+        "id_token":     t["IdToken"],
+        "access_token": t["AccessToken"],
+        "expires_in":   t["ExpiresIn"],
+    }
+
+
 @router.post("/resend", status_code=200)
 async def cognito_resend(body: ResendRequest):
     c = _cognito_client()

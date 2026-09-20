@@ -32,6 +32,16 @@ async function gmResend(email) {
   return _api('/auth/resend', { email });
 }
 
+async function gmRefreshSession() {
+  const refreshToken = localStorage.getItem('gm_refresh_token');
+  const email        = localStorage.getItem('gm_email');
+  if (!refreshToken || !email) throw new Error('No session — please log in again');
+  const data = await _api('/auth/refresh', { refresh_token: refreshToken, email });
+  localStorage.setItem('gm_id_token',     data.id_token);
+  localStorage.setItem('gm_access_token', data.access_token);
+  return data;
+}
+
 function gmSignOut() {
   ['gm_id_token','gm_access_token','gm_refresh_token','gm_email','gm_api_key'].forEach(k => localStorage.removeItem(k));
   window.location.href = '/login';

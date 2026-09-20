@@ -11,13 +11,23 @@ function _headers(useJwt = false) {
   return h;
 }
 
-async function _req(method, path, body = null, useJwt = false) {
+async function _req(method, path, body = null, useJwt = false, _retry = false) {
   const opts = { method, headers: _headers(useJwt) };
   if (body) opts.body = JSON.stringify(body);
   const resp = await fetch(`${GM_BASE}${path}`, opts);
   if (resp.status === 204) return null;
   const data = await resp.json();
-  if (!resp.ok) throw new Error(data.detail || JSON.stringify(data));
+  if (!resp.ok) {
+    const msg = data.detail || JSON.stringify(data);
+    if (useJwt && !_retry && (resp.status === 401 || resp.status === 403) &&
+        msg.toLowerCase().includes('expir')) {
+      try {
+        await gmRefreshSession();
+        return _req(method, path, body, useJwt, true);
+      } catch (_) {}
+    }
+    throw new Error(msg);
+  }
   return data;
 }
 
