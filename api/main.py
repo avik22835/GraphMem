@@ -1,5 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from api.db.postgres import init_pool, close_pool
 from api.db.neptune import init_neptune, close_neptune
 from api.routes import memory, conversations, topics, utils, auth
@@ -22,6 +25,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 _auth = [Depends(get_current_principal)]
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -34,3 +44,32 @@ app.include_router(utils.router, prefix="/utils", tags=["utils"], dependencies=_
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# ── Frontend page routes ───────────────────────────────────────────
+@app.get("/", include_in_schema=False)
+async def index():
+    return FileResponse("api/static/index.html")
+
+@app.get("/reference", include_in_schema=False)
+async def reference():
+    return FileResponse("api/static/reference.html")
+
+@app.get("/playground", include_in_schema=False)
+async def playground():
+    return FileResponse("api/static/playground.html")
+
+@app.get("/login", include_in_schema=False)
+async def login():
+    return FileResponse("api/static/login.html")
+
+@app.get("/signup", include_in_schema=False)
+async def signup():
+    return FileResponse("api/static/signup.html")
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard():
+    return FileResponse("api/static/dashboard.html")
+
+
+app.mount("/static", StaticFiles(directory="api/static"), name="static")

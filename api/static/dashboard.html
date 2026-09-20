@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — GraphMem</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <span class="logo-icon">⬡</span>
+      GraphMem
+    </a>
+    <a href="/reference" class="nav-link">Reference</a>
+    <a href="/playground" class="nav-link">Playground</a>
+    <div class="nav-right">
+      <div class="nav-divider"></div>
+      <span id="navEmail" class="nav-link" style="cursor:default;"></span>
+      <button class="btn btn-secondary btn-sm" onclick="gmSignOut()">Log out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Page ─────────────────────────────────────────────────────── -->
+<div class="app-wrap">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>API Keys</h1>
+      <p>Keys authenticate your SDK and direct API calls. Keep them secret.</p>
+    </div>
+
+    <!-- Keys panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Your keys</span>
+        <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ New key</button>
+      </div>
+
+      <div id="keysWrap">
+        <div id="keysLoading" class="flex-center" style="padding:40px;">
+          <span class="spinner"></span>
+        </div>
+        <table class="keys-table hidden" id="keysTable">
+          <thead>
+            <tr>
+              <th>Prefix</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Last used</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="keysTbody"></tbody>
+        </table>
+        <div id="keysEmpty" class="hidden flex-center" style="padding:48px;flex-direction:column;gap:10px;">
+          <span style="font-size:28px;color:var(--text-3);">⬡</span>
+          <span style="font-size:14px;color:var(--text-3);">No keys yet — create one to start using the API.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage hint -->
+    <div style="margin-top:12px;">
+      <div class="code-block" style="max-width:520px;">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">usage</span>
+        </div>
+        <div class="code-body"><pre><span class="tk-cm"># SDK</span>
+<span class="tk-obj">gm</span> <span class="tk-pn">=</span> <span class="tk-fn">GraphMemClient</span><span class="tk-pn">(</span><span class="tk-str">"https://api.graphmem.dev"</span><span class="tk-pn">,</span> <span class="tk-key">api_key</span><span class="tk-pn">=</span><span class="tk-str">"gm_sk_..."</span><span class="tk-pn">)</span>
+
+<span class="tk-cm"># Direct HTTP</span>
+<span class="tk-fn">curl</span> <span class="tk-pn">-H</span> <span class="tk-str">"X-API-Key: gm_sk_..."</span> <span class="tk-obj">https://api.graphmem.dev/health</span></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Create key modal ──────────────────────────────────────────── -->
+<div class="modal-backdrop hidden" id="createModal">
+  <div class="modal-box">
+    <h2 class="modal-title">Create API key</h2>
+    <p class="modal-sub">Give this key a name to identify it later.</p>
+
+    <div class="form-group">
+      <label class="form-label">Key name</label>
+      <input type="text" class="form-input" id="keyName" placeholder="e.g. my-agent, production" />
+    </div>
+    <div id="createError" class="form-error hidden" style="margin-bottom:10px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn btn-primary" id="createBtn" onclick="createKey()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Key reveal modal ──────────────────────────────────────────── -->
+<div class="modal-backdrop hidden" id="revealModal">
+  <div class="modal-box">
+    <h2 class="modal-title">Your new API key</h2>
+    <p class="modal-sub">Copy it now — you won't be able to see it again.</p>
+
+    <div class="key-reveal" id="keyRevealValue" onclick="copyKey()" style="cursor:pointer;" title="Click to copy">
+      —
+    </div>
+    <p class="key-note">Store this somewhere safe. It cannot be recovered.</p>
+
+    <div class="modal-footer" style="margin-top:20px;">
+      <button class="btn btn-secondary" onclick="copyKey()" id="copyKeyBtn">Copy key</button>
+      <button class="btn btn-primary" onclick="closeRevealModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Revoke confirm modal ──────────────────────────────────────── -->
+<div class="modal-backdrop hidden" id="revokeModal">
+  <div class="modal-box">
+    <h2 class="modal-title">Revoke key?</h2>
+    <p class="modal-sub" id="revokeDesc">This will immediately invalidate the key. Any apps using it will stop working.</p>
+    <div id="revokeError" class="form-error hidden" style="margin-bottom:10px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRevokeModal()">Cancel</button>
+      <button class="btn btn-danger" id="revokeBtn" onclick="confirmRevoke()">Revoke</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/auth.js"></script>
+<script src="/static/js/api.js"></script>
+<script>
+  gmRequireAuth();
+  document.getElementById('navEmail').textContent = gmGetEmail();
+
+  let _revokeId = null;
+  let _newFullKey = '';
+
+  // ── Load keys ─────────────────────────────────────────────────
+  async function loadKeys() {
+    try {
+      const keys = await AuthAPI.listKeys();
+      document.getElementById('keysLoading').classList.add('hidden');
+
+      if (!keys || keys.length === 0) {
+        document.getElementById('keysEmpty').classList.remove('hidden');
+        return;
+      }
+
+      const tbody = document.getElementById('keysTbody');
+      tbody.innerHTML = keys.map(k => `
+        <tr>
+          <td>${k.key_prefix}...</td>
+          <td>${k.project_name || '<span style="color:var(--text-3)">—</span>'}</td>
+          <td>
+            <span class="status-pill ${k.is_active ? 'active' : 'revoked'}">
+              ${k.is_active ? 'Active' : 'Revoked'}
+            </span>
+          </td>
+          <td>${k.last_used_at ? timeAgo(k.last_used_at) : '<span style="color:var(--text-3)">Never</span>'}</td>
+          <td>${fmtDate(k.created_at)}</td>
+          <td style="text-align:right;">
+            ${k.is_active ? `<button class="btn btn-danger btn-sm" onclick="openRevokeModal('${k.key_id}','${k.key_prefix}')">Revoke</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('keysTable').classList.remove('hidden');
+    } catch (ex) {
+      document.getElementById('keysLoading').innerHTML =
+        `<span style="color:var(--red);font-size:13px;">${ex.message}</span>`;
+    }
+  }
+
+  // ── Create key ────────────────────────────────────────────────
+  function openCreateModal() {
+    document.getElementById('keyName').value = '';
+    document.getElementById('createError').classList.add('hidden');
+    document.getElementById('createModal').classList.remove('hidden');
+    document.getElementById('keyName').focus();
+  }
+  function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
+
+  async function createKey() {
+    const name = document.getElementById('keyName').value.trim();
+    const btn  = document.getElementById('createBtn');
+    const err  = document.getElementById('createError');
+
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled  = true;
+    err.classList.add('hidden');
+
+    try {
+      const result = await AuthAPI.createKey(name || null, { read: true, write: true });
+      _newFullKey = result.key;
+      closeCreateModal();
+      document.getElementById('keyRevealValue').textContent = result.key;
+      document.getElementById('revealModal').classList.remove('hidden');
+      await loadKeys();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+    } finally {
+      btn.textContent = 'Create';
+      btn.disabled    = false;
+    }
+  }
+
+  function closeRevealModal() {
+    document.getElementById('revealModal').classList.add('hidden');
+    _newFullKey = '';
+  }
+
+  function copyKey() {
+    if (_newFullKey) {
+      navigator.clipboard.writeText(_newFullKey);
+      document.getElementById('copyKeyBtn').textContent = 'Copied!';
+      setTimeout(() => document.getElementById('copyKeyBtn').textContent = 'Copy key', 2000);
+    }
+  }
+
+  // ── Revoke key ────────────────────────────────────────────────
+  function openRevokeModal(keyId, prefix) {
+    _revokeId = keyId;
+    document.getElementById('revokeDesc').textContent =
+      `This will immediately invalidate key ${prefix}... Any apps using it will stop working.`;
+    document.getElementById('revokeError').classList.add('hidden');
+    document.getElementById('revokeModal').classList.remove('hidden');
+  }
+  function closeRevokeModal() {
+    document.getElementById('revokeModal').classList.add('hidden');
+    _revokeId = null;
+  }
+
+  async function confirmRevoke() {
+    if (!_revokeId) return;
+    const btn = document.getElementById('revokeBtn');
+    const err = document.getElementById('revokeError');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled  = true;
+    try {
+      await AuthAPI.revokeKey(_revokeId);
+      closeRevokeModal();
+      document.getElementById('keysTable').classList.add('hidden');
+      document.getElementById('keysLoading').classList.remove('hidden');
+      document.getElementById('keysLoading').innerHTML = '<span class="spinner"></span>';
+      await loadKeys();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+      btn.textContent = 'Revoke';
+      btn.disabled    = false;
+    }
+  }
+
+  // ── Keyboard: close modals on Escape ─────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeCreateModal();
+      closeRevokeModal();
+    }
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function timeAgo(iso) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)   return 'Just now';
+    if (mins < 60)  return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs  < 24)  return `${hrs}h ago`;
+    return fmtDate(iso);
+  }
+
+  loadKeys();
+</script>
+</body>
+</html>

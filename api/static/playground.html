@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playground — GraphMem</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span class="logo-icon">⬡</span>GraphMem</a>
+    <a href="/" class="nav-link">Home</a>
+    <a href="/reference" class="nav-link">Reference</a>
+    <a href="/playground" class="nav-link active">Playground</a>
+    <div class="nav-right">
+      <div class="nav-divider"></div>
+      <a href="/login" class="nav-link" id="navSignIn">Log in</a>
+      <a href="/signup" class="btn btn-ghost btn-sm" id="navSignUp">Get API Key</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Auth banner ──────────────────────────────────────────────── -->
+<div class="pg-auth-bar">
+  <div class="pg-auth-inner">
+    <div class="pg-auth-label">API key</div>
+    <input
+      type="password" id="pgApiKey"
+      class="pg-auth-input" placeholder="gm_sk_..."
+      autocomplete="off" spellcheck="false"
+    />
+    <button class="btn btn-primary btn-sm" onclick="saveKey()">Use</button>
+    <a href="/dashboard" class="btn btn-ghost btn-sm" style="margin-left:auto;">Manage keys →</a>
+    <span class="pg-key-status hidden" id="pgKeyStatus"></span>
+  </div>
+</div>
+
+<!-- ── 3-panel playground ────────────────────────────────────────── -->
+<div class="pg-wrap">
+
+  <!-- Left: endpoint list ────────────────────────────────────────── -->
+  <aside class="pg-sidebar">
+    <div class="pg-sidebar-section">
+      <span class="pg-sidebar-label">Quick start</span>
+      <button class="pg-ep-btn active" onclick="selectEndpoint('health')">Health check</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('create-conversation')">Create conversation</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('recall')">Recall ✦</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-retrieve')">Topic retrieve ✦</button>
+    </div>
+    <div class="pg-sidebar-section">
+      <span class="pg-sidebar-label">Conversations</span>
+      <button class="pg-ep-btn" onclick="selectEndpoint('create-conversation')">Create</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('list-conversations')">List</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('conv-stats')">Stats</button>
+    </div>
+    <div class="pg-sidebar-section">
+      <span class="pg-sidebar-label">Memory</span>
+      <button class="pg-ep-btn" onclick="selectEndpoint('add-prompt')">Add prompt</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('add-response')">Add response</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('recall')">Recall</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('get-node')">Get node</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('neighbours')">Neighbours</button>
+    </div>
+    <div class="pg-sidebar-section">
+      <span class="pg-sidebar-label">Topics</span>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-list')">List topics</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-current')">Current topic</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-status')">Status</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-summary')">Summary</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-relevance')">Relevance</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-messages')">Messages</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('topics-retrieve')">Retrieve</button>
+    </div>
+    <div class="pg-sidebar-section">
+      <span class="pg-sidebar-label">Utils</span>
+      <button class="pg-ep-btn" onclick="selectEndpoint('health')">Health</button>
+      <button class="pg-ep-btn" onclick="selectEndpoint('count-tokens')">Count tokens</button>
+    </div>
+  </aside>
+
+  <!-- Center: request builder ────────────────────────────────────── -->
+  <section class="pg-center">
+
+    <div class="pg-endpoint-row">
+      <span class="http" id="pgMethod">GET</span>
+      <code class="pg-path" id="pgPath">/health</code>
+      <button class="btn btn-primary" id="sendBtn" onclick="sendRequest()">Send →</button>
+    </div>
+
+    <p class="pg-desc" id="pgDesc">Liveness check. No auth required.</p>
+
+    <div id="pgFields">
+      <!-- dynamically rendered fields -->
+    </div>
+
+  </section>
+
+  <!-- Right: response pane ───────────────────────────────────────── -->
+  <section class="pg-response">
+    <div class="pg-response-header">
+      <span class="pg-response-label">Response</span>
+      <span class="pg-status hidden" id="pgStatus"></span>
+      <span class="pg-latency hidden" id="pgLatency"></span>
+      <button class="btn btn-ghost btn-sm" id="copyRespBtn" onclick="copyResponse()" style="margin-left:auto;display:none;">Copy</button>
+    </div>
+    <div class="pg-response-body" id="pgResponseBody">
+      <span class="pg-placeholder">Hit Send to see the response.</span>
+    </div>
+  </section>
+
+</div>
+
+<script src="/static/js/auth.js"></script>
+<script>
+// ── Init ────────────────────────────────────────────────────────────
+const GM_BASE = window.location.origin;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const stored = localStorage.getItem('gm_api_key');
+  if (stored) {
+    document.getElementById('pgApiKey').value = stored;
+    document.getElementById('pgKeyStatus').textContent = 'Key loaded';
+    document.getElementById('pgKeyStatus').classList.remove('hidden');
+  }
+  if (gmIsAuthenticated()) {
+    document.getElementById('navSignIn').style.display  = 'none';
+    document.getElementById('navSignUp').style.display  = 'none';
+  }
+  selectEndpoint('health');
+});
+
+function saveKey() {
+  const key = document.getElementById('pgApiKey').value.trim();
+  if (!key) return;
+  localStorage.setItem('gm_api_key', key);
+  const s = document.getElementById('pgKeyStatus');
+  s.textContent = '✓ Saved';
+  s.classList.remove('hidden');
+  setTimeout(() => s.classList.add('hidden'), 2000);
+}
+
+// ── Endpoint definitions ─────────────────────────────────────────────
+const ENDPOINTS = {
+  'health': {
+    method: 'GET', path: '/health',
+    desc: 'Liveness check. No auth required.',
+    fields: [],
+  },
+  'create-conversation': {
+    method: 'POST', path: '/conversations',
+    desc: 'Create a new conversation. Returns a conversation_id.',
+    fields: [
+      { id: 'meta', label: 'metadata (JSON, optional)', type: 'textarea', placeholder: '{"user_id": "u_123"}', optional: true },
+    ],
+  },
+  'list-conversations': {
+    method: 'GET', path: '/conversations',
+    desc: 'List all conversations for your API key.',
+    fields: [],
+  },
+  'conv-stats': {
+    method: 'GET', path: '/conversations/{conversation_id}/stats',
+    desc: 'Node count, edge count, topic count, graph density.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+    ],
+  },
+  'add-prompt': {
+    method: 'POST', path: '/memory/prompt',
+    desc: 'Store a user prompt. Returns a memory_id — pass to add_response to complete the node.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'content', label: 'content', type: 'textarea', placeholder: 'How does async/await work in Python?' },
+    ],
+  },
+  'add-response': {
+    method: 'POST', path: '/memory/{memory_id}/response',
+    desc: 'Attach the assistant response to a pending node. Queues embedding + graph insertion.',
+    fields: [
+      { id: 'memory_id', label: 'memory_id (path param)', type: 'text', placeholder: '9e4c3d2a-...' },
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'content', label: 'content (assistant response)', type: 'textarea', placeholder: 'async/await is built on Python coroutines...' },
+    ],
+  },
+  'recall': {
+    method: 'POST', path: '/memory/recall',
+    desc: 'Core retrieval — embeds query, runs multi-set graph traversal, returns token-budgeted context ready for your LLM.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'query', label: 'query', type: 'textarea', placeholder: 'How does async/await work?' },
+      { id: 'k', label: 'k (top-K, default 5)', type: 'number', placeholder: '5', optional: true },
+      { id: 'threshold', label: 'threshold (default 0.4)', type: 'number', placeholder: '0.4', optional: true, step: '0.1', min: '0', max: '1' },
+      { id: 'strategy', label: 'strategy', type: 'select', options: ['semantic', 'semantic_recency'], optional: true },
+      { id: 'always_include_recent', label: 'always_include_recent', type: 'number', placeholder: '2', optional: true },
+      { id: 'max_tokens', label: 'max_tokens', type: 'number', placeholder: '2000', optional: true },
+    ],
+  },
+  'get-node': {
+    method: 'GET', path: '/memory/{memory_id}',
+    desc: 'Fetch a single memory node by ID.',
+    fields: [
+      { id: 'memory_id', label: 'memory_id', type: 'text', placeholder: '9e4c3d2a-...' },
+    ],
+  },
+  'neighbours': {
+    method: 'GET', path: '/memory/{memory_id}/neighbours',
+    desc: 'Graph neighbours connected by cosine-similarity edges above the threshold.',
+    fields: [
+      { id: 'memory_id', label: 'memory_id', type: 'text', placeholder: '9e4c3d2a-...' },
+      { id: 'threshold', label: 'threshold (default 0.7)', type: 'number', placeholder: '0.7', optional: true, step: '0.1', min: '0', max: '1' },
+      { id: 'limit', label: 'limit', type: 'number', placeholder: '10', optional: true },
+    ],
+  },
+  'topics-list': {
+    method: 'GET', path: '/topics',
+    desc: 'List all topics for a conversation with label, message count, and status.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'status', label: 'status filter (optional)', type: 'select', options: ['', 'active', 'dormant', 'resolved'], optional: true },
+    ],
+  },
+  'topics-current': {
+    method: 'GET', path: '/topics/current',
+    desc: 'Returns the topic the conversation is currently in — based on the last complete message node.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'mode', label: 'mode (default centroid)', type: 'select', options: ['centroid', 'hybrid', 'llm'], optional: true },
+    ],
+  },
+  'topics-status': {
+    method: 'GET', path: '/topics/{topic_id}/status',
+    desc: 'Returns active, dormant, or resolved.',
+    fields: [
+      { id: 'topic_id', label: 'topic_id', type: 'text', placeholder: 'topic-uuid...' },
+    ],
+  },
+  'topics-summary': {
+    method: 'GET', path: '/topics/{topic_id}/summary',
+    desc: 'LLM-generated summary for the entire topic.',
+    fields: [
+      { id: 'topic_id', label: 'topic_id', type: 'text', placeholder: 'topic-uuid...' },
+    ],
+  },
+  'topics-relevance': {
+    method: 'GET', path: '/topics/relevance',
+    desc: 'Score all topics against a query. Returns top-N ranked by cosine to topic centroids.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'query', label: 'query', type: 'text', placeholder: 'How does async/await work?' },
+      { id: 'top_n', label: 'top_n (default 3)', type: 'number', placeholder: '3', optional: true },
+    ],
+  },
+  'topics-messages': {
+    method: 'GET', path: '/topics/{topic_id}/messages',
+    desc: 'All memory nodes in a topic. Narrow with a query and apply a token budget.',
+    fields: [
+      { id: 'topic_id', label: 'topic_id', type: 'text', placeholder: 'topic-uuid...' },
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'query', label: 'query (optional)', type: 'text', placeholder: 'async/await', optional: true },
+      { id: 'max_tokens', label: 'max_tokens (optional)', type: 'number', placeholder: '2000', optional: true },
+    ],
+  },
+  'topics-retrieve': {
+    method: 'POST', path: '/topics/retrieve',
+    desc: 'Full two-stage retrieval — relevance-ranks topics, then retrieves messages. Most token-efficient path.',
+    fields: [
+      { id: 'conversation_id', label: 'conversation_id', type: 'text', placeholder: '3f7a1b2c-...' },
+      { id: 'query', label: 'query', type: 'textarea', placeholder: 'How does async/await work?' },
+      { id: 'top_n', label: 'top_n (default 3)', type: 'number', placeholder: '3', optional: true },
+      { id: 'max_tokens', label: 'max_tokens (optional)', type: 'number', placeholder: '2000', optional: true },
+    ],
+  },
+  'count-tokens': {
+    method: 'POST', path: '/utils/count_tokens',
+    desc: 'Estimate token count using the same tokenizer GraphMem uses for token budgeting.',
+    fields: [
+      { id: 'text', label: 'text', type: 'textarea', placeholder: 'Paste text here to count tokens...' },
+    ],
+  },
+};
+
+let _current = 'health';
+
+// ── Select endpoint ──────────────────────────────────────────────────
+function selectEndpoint(id) {
+  _current = id;
+  const ep = ENDPOINTS[id];
+  if (!ep) return;
+
+  // Update active button
+  document.querySelectorAll('.pg-ep-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick') === `selectEndpoint('${id}')`);
+  });
+
+  // Header
+  const methodEl = document.getElementById('pgMethod');
+  methodEl.textContent = ep.method;
+  methodEl.className   = `http http-${ep.method.toLowerCase()}`;
+  document.getElementById('pgPath').textContent = ep.path;
+  document.getElementById('pgDesc').textContent = ep.desc;
+
+  // Fields
+  const wrap = document.getElementById('pgFields');
+  wrap.innerHTML = '';
+  ep.fields.forEach(f => {
+    const g = document.createElement('div');
+    g.className = 'pg-field-group';
+    const label = document.createElement('label');
+    label.className = 'pg-field-label';
+    label.htmlFor = `pgf-${f.id}`;
+    label.innerHTML = f.label + (f.optional ? ` <span class="optional">optional</span>` : ` <span class="required">required</span>`);
+    g.appendChild(label);
+
+    if (f.type === 'textarea') {
+      const ta = document.createElement('textarea');
+      ta.id = `pgf-${f.id}`;
+      ta.className = 'pg-field-input pg-field-textarea';
+      ta.placeholder = f.placeholder || '';
+      ta.rows = 3;
+      g.appendChild(ta);
+    } else if (f.type === 'select') {
+      const sel = document.createElement('select');
+      sel.id = `pgf-${f.id}`;
+      sel.className = 'pg-field-input pg-field-select';
+      f.options.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = o.textContent = opt;
+        sel.appendChild(o);
+      });
+      g.appendChild(sel);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = f.type || 'text';
+      inp.id = `pgf-${f.id}`;
+      inp.className = 'pg-field-input';
+      inp.placeholder = f.placeholder || '';
+      if (f.step) inp.step = f.step;
+      if (f.min  !== undefined) inp.min = f.min;
+      if (f.max  !== undefined) inp.max = f.max;
+      g.appendChild(inp);
+    }
+    wrap.appendChild(g);
+  });
+
+  // Reset response
+  document.getElementById('pgResponseBody').innerHTML = '<span class="pg-placeholder">Hit Send to see the response.</span>';
+  document.getElementById('pgStatus').classList.add('hidden');
+  document.getElementById('pgLatency').classList.add('hidden');
+  document.getElementById('copyRespBtn').style.display = 'none';
+}
+
+// ── Send request ─────────────────────────────────────────────────────
+async function sendRequest() {
+  const ep     = ENDPOINTS[_current];
+  const apiKey = document.getElementById('pgApiKey').value.trim() || localStorage.getItem('gm_api_key') || '';
+  const btn    = document.getElementById('sendBtn');
+  const body_el = document.getElementById('pgResponseBody');
+
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled  = true;
+  body_el.innerHTML = '<span class="pg-placeholder">Sending…</span>';
+  document.getElementById('pgStatus').classList.add('hidden');
+  document.getElementById('pgLatency').classList.add('hidden');
+
+  // Gather field values
+  const vals = {};
+  ep.fields.forEach(f => {
+    const el = document.getElementById(`pgf-${f.id}`);
+    if (el) vals[f.id] = el.value;
+  });
+
+  // Build URL + body
+  let path = ep.path;
+  let bodyObj = null;
+  let queryParams = new URLSearchParams();
+
+  // Handle path params
+  ['memory_id','conversation_id','topic_id'].forEach(p => {
+    if (vals[p] && path.includes(`{${p}}`)) {
+      path = path.replace(`{${p}}`, encodeURIComponent(vals[p].trim()));
+      delete vals[p];
+    }
+  });
+
+  // Build body or query
+  if (ep.method === 'POST') {
+    bodyObj = {};
+    ep.fields.forEach(f => {
+      const v = vals[f.id];
+      if (v === undefined || v === '') return;
+      if (path.includes(`{${f.id}}`)) return; // already in path
+
+      if (f.id === 'meta') {
+        try { bodyObj['metadata'] = JSON.parse(v); } catch { bodyObj['metadata'] = {}; }
+      } else if (f.type === 'number') {
+        const n = parseFloat(v);
+        if (!isNaN(n)) bodyObj[f.id] = n;
+      } else {
+        bodyObj[f.id] = v.trim();
+      }
+    });
+  } else {
+    // GET — leftover non-path fields → query params
+    ep.fields.forEach(f => {
+      if (path.includes(`{${f.id}}`)) return;
+      const v = vals[f.id];
+      if (v !== undefined && v !== '') queryParams.set(f.id, v.trim());
+    });
+  }
+
+  const qs = queryParams.toString();
+  const url = `${GM_BASE}${path}${qs ? '?' + qs : ''}`;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers['X-API-Key'] = apiKey;
+
+  const t0 = performance.now();
+  let status = 0;
+
+  try {
+    const resp = await fetch(url, {
+      method:  ep.method,
+      headers,
+      body:    bodyObj ? JSON.stringify(bodyObj) : undefined,
+    });
+    status = resp.status;
+    const elapsed = Math.round(performance.now() - t0);
+
+    let text;
+    try {
+      const json = await resp.json();
+      text = JSON.stringify(json, null, 2);
+    } catch {
+      text = await resp.text();
+    }
+
+    renderResponse(text, status, elapsed);
+  } catch (err) {
+    const elapsed = Math.round(performance.now() - t0);
+    renderResponse(`Network error: ${err.message}`, 0, elapsed);
+  } finally {
+    btn.textContent = 'Send →';
+    btn.disabled    = false;
+  }
+}
+
+function renderResponse(text, status, ms) {
+  const statusEl  = document.getElementById('pgStatus');
+  const latencyEl = document.getElementById('pgLatency');
+  const bodyEl    = document.getElementById('pgResponseBody');
+  const copyBtn   = document.getElementById('copyRespBtn');
+
+  statusEl.textContent = status ? `${status}` : 'ERR';
+  statusEl.className   = `pg-status ${status >= 200 && status < 300 ? 'ok' : 'err'}`;
+  statusEl.classList.remove('hidden');
+
+  latencyEl.textContent = `${ms}ms`;
+  latencyEl.classList.remove('hidden');
+
+  bodyEl.innerHTML = `<pre>${escHtml(text)}</pre>`;
+  copyBtn.style.display = '';
+
+  window._pgLastResp = text;
+}
+
+function copyResponse() {
+  if (window._pgLastResp) {
+    navigator.clipboard.writeText(window._pgLastResp);
+    document.getElementById('copyRespBtn').textContent = 'Copied!';
+    setTimeout(() => document.getElementById('copyRespBtn').textContent = 'Copy', 2000);
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

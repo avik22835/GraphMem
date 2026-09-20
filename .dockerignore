@@ -7,7 +7,6 @@ __pycache__/
 .gitignore
 workers/
 sdk/
-playground/
 infra/
 *.md
 .venv/

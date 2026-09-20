@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GraphMem — Graph-native memory for LLM agents</title>
+  <meta name="description" content="Drop-in context management API. GraphMem models your conversation as a semantic graph and retrieves only the most relevant messages at inference time." />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <span class="logo-icon">⬡</span>
+      GraphMem
+    </a>
+    <a href="/reference" class="nav-link">Docs</a>
+    <a href="/reference" class="nav-link">Reference</a>
+    <a href="/playground" class="nav-link">Playground</a>
+    <a href="https://github.com/avik22835/graphmem" class="nav-link" target="_blank" rel="noopener">GitHub ↗</a>
+    <div class="nav-right">
+      <div class="nav-divider"></div>
+      <a href="/login" class="nav-link">Log in</a>
+      <a href="/signup" class="btn btn-ghost btn-sm">Get API Key</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">
+      <span class="badge badge-accent">◆ Open Beta</span>
+    </div>
+    <h1>Graph-native memory<br>for LLM agents.</h1>
+    <p class="hero-sub">
+      Drop-in context management API. Models your conversation as a
+      semantic graph and retrieves only the most relevant messages at
+      inference time — cutting token usage without losing coherence.
+    </p>
+    <div class="hero-ctas">
+      <a href="/signup" class="btn btn-primary btn-lg">Get started free →</a>
+      <a href="/reference" class="btn btn-secondary btn-lg">View reference</a>
+    </div>
+
+    <!-- Hero code block -->
+    <div class="code-block" style="text-align:left;max-width:580px;margin:0 auto;">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
+        </div>
+        <span class="code-filename">agent.py</span>
+        <button class="code-copy" onclick="copyCode(this,'hero-code')">Copy</button>
+      </div>
+      <div class="code-body">
+        <pre id="hero-code"><span class="tk-kw">from</span> <span class="tk-obj">graphmem</span> <span class="tk-kw">import</span> <span class="tk-fn">GraphMemClient</span>
+
+<span class="tk-obj">gm</span> <span class="tk-pn">=</span> <span class="tk-fn">GraphMemClient</span><span class="tk-pn">(</span><span class="tk-str">"https://api.graphmem.dev"</span><span class="tk-pn">,</span> <span class="tk-key">api_key</span><span class="tk-pn">=</span><span class="tk-str">"gm_sk_..."</span><span class="tk-pn">)</span>
+<span class="tk-obj">conv_id</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">conversations</span><span class="tk-pn">.</span><span class="tk-acc">create</span><span class="tk-pn">()[</span><span class="tk-str">"conversation_id"</span><span class="tk-pn">]</span>
+
+<span class="tk-cm"># Store a message pair</span>
+<span class="tk-obj">mid</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">add_prompt</span><span class="tk-pn">(</span><span class="tk-obj">conv_id</span><span class="tk-pn">,</span> <span class="tk-obj">user_message</span><span class="tk-pn">)</span>
+<span class="tk-obj">ctx</span>  <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">recall</span><span class="tk-pn">(</span><span class="tk-obj">conv_id</span><span class="tk-pn">,</span> <span class="tk-key">query</span><span class="tk-pn">=</span><span class="tk-obj">user_message</span><span class="tk-pn">)</span>
+<span class="tk-obj">reply</span> <span class="tk-pn">=</span> <span class="tk-obj">your_llm</span><span class="tk-pn">.</span><span class="tk-fn">chat</span><span class="tk-pn">(</span><span class="tk-obj">ctx</span><span class="tk-pn">[</span><span class="tk-str">"messages"</span><span class="tk-pn">])</span>
+<span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">add_response</span><span class="tk-pn">(</span><span class="tk-obj">mid</span><span class="tk-pn">,</span> <span class="tk-obj">conv_id</span><span class="tk-pn">,</span> <span class="tk-obj">reply</span><span class="tk-pn">)</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ──────────────────────────────────────────────── -->
+<section class="section" style="border-top: 1px solid var(--border);">
+  <div class="container">
+    <h4 class="section-tag">How it works</h4>
+    <h2 class="section-title">Two retrieval layers.<br>One API.</h2>
+    <p class="section-sub">
+      Every message is embedded and wired into a semantic graph. At inference time,
+      GraphMem traverses that graph to surface the most relevant context — automatically.
+    </p>
+
+    <div class="diagram">
+      <!-- Layer 1 -->
+      <div class="diagram-layer">
+        <div class="diagram-layer-label">Layer 1 · Message Retrieval — finest granularity</div>
+        <div class="diagram-row">
+          <div class="diagram-box">
+            <div class="diagram-box-num">① Ingest</div>
+            <div class="diagram-box-title">Store</div>
+            <div class="diagram-box-lines">
+              <span class="diagram-box-line acc">add_prompt()</span>
+              <span class="diagram-box-line acc">add_response()</span>
+              <span class="diagram-box-line">→ pending node</span>
+              <span class="diagram-box-line">→ complete node</span>
+            </div>
+          </div>
+          <div class="diagram-arrow">→</div>
+          <div class="diagram-box highlight">
+            <div class="diagram-box-num">② Build</div>
+            <div class="diagram-box-title">Embed &amp; Graph</div>
+            <div class="diagram-box-lines">
+              <span class="diagram-box-line acc">Jina v4 embed</span>
+              <span class="diagram-box-line">pgvector HNSW</span>
+              <span class="diagram-box-line">Neptune edges</span>
+              <span class="diagram-box-line">cosine ≥ 0.4</span>
+            </div>
+          </div>
+          <div class="diagram-arrow">→</div>
+          <div class="diagram-box">
+            <div class="diagram-box-num">③ Retrieve</div>
+            <div class="diagram-box-title">Recall</div>
+            <div class="diagram-box-lines">
+              <span class="diagram-box-line acc">recall(query)</span>
+              <span class="diagram-box-line">Set B top-K</span>
+              <span class="diagram-box-line">Set A' threshold</span>
+              <span class="diagram-box-line">Set C 1-hop + R</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-sep"></div>
+
+      <!-- Layer 2 -->
+      <div class="diagram-layer">
+        <div class="diagram-layer-label">Layer 2 · Topic Intelligence — refined control</div>
+        <div class="diagram-row">
+          <div class="diagram-box">
+            <div class="diagram-box-num">④ Cluster</div>
+            <div class="diagram-box-title">Detect Topics</div>
+            <div class="diagram-box-lines">
+              <span class="diagram-box-line">Louvain algo</span>
+              <span class="diagram-box-line">every 20 nodes</span>
+              <span class="diagram-box-line">background job</span>
+            </div>
+          </div>
+          <div class="diagram-arrow">→</div>
+          <div class="diagram-box highlight">
+            <div class="diagram-box-num">⑤ Label</div>
+            <div class="diagram-box-title">Understand</div>
+            <div class="diagram-box-lines">
+              <span class="diagram-box-line acc">Groq llm label</span>
+              <span class="diagram-box-line">+ summary</span>
+              <span class="diagram-box-line">coherence score</span>
+            </div>
+          </div>
+          <div class="diagram-arrow">→</div>
+          <div class="diagram-box">
+            <div class="diagram-box-num">⑥ Filter</div>
+            <div class="diagram-box-title">Control Context</div>
+            <div class="diagram-box-lines">
+              <span class="diagram-box-line acc">status()</span>
+              <span class="diagram-box-line acc">relevance()</span>
+              <span class="diagram-box-line acc">retrieve()</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Layer 1 Feature ───────────────────────────────────────────── -->
+<section class="section">
+  <div class="container">
+    <h4 class="section-tag">Layer 1</h4>
+    <div class="feature-split">
+      <div>
+        <h2 class="section-title">Semantic Graph Recall</h2>
+        <p style="margin-bottom:20px;">
+          The default retrieval path. For every query, GraphMem runs a multi-set
+          graph traversal across your conversation history and returns a token-budgeted,
+          timestamp-ordered context window — ready to inject into your LLM.
+        </p>
+        <div class="feature-points">
+          <div class="feature-point">
+            <div class="feature-point-dot"></div>
+            <span><strong style="color:var(--text)">Set B</strong> — strict top-K nodes by cosine similarity via pgvector HNSW index</span>
+          </div>
+          <div class="feature-point">
+            <div class="feature-point-dot"></div>
+            <span><strong style="color:var(--text)">Set A'</strong> — all nodes directly reachable from the query embedding above threshold</span>
+          </div>
+          <div class="feature-point">
+            <div class="feature-point-dot"></div>
+            <span><strong style="color:var(--text)">Set C</strong> — 1-hop Neptune graph expansion from Set B, catching connected context</span>
+          </div>
+          <div class="feature-point">
+            <div class="feature-point-dot"></div>
+            <span><strong style="color:var(--text)">Set R</strong> — always-recent guard, exempt from token budget cuts</span>
+          </div>
+          <div class="feature-point">
+            <div class="feature-point-dot"></div>
+            <span>Token budgeting: rank by relevance → cut → re-sort by timestamp</span>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
+          </div>
+          <span class="code-filename">recall.py</span>
+          <button class="code-copy" onclick="copyCode(this,'recall-code')">Copy</button>
+        </div>
+        <div class="code-body">
+          <pre id="recall-code"><span class="tk-obj">result</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">recall</span><span class="tk-pn">(</span>
+    <span class="tk-obj">conv_id</span><span class="tk-pn">,</span>
+    <span class="tk-key">query</span>  <span class="tk-pn">=</span> <span class="tk-str">"user's latest message"</span><span class="tk-pn">,</span>
+    <span class="tk-key">k</span>      <span class="tk-pn">=</span> <span class="tk-num">5</span><span class="tk-pn">,</span>
+    <span class="tk-key">strategy</span> <span class="tk-pn">=</span> <span class="tk-str">"semantic"</span><span class="tk-pn">,</span>
+    <span class="tk-key">always_include_recent</span> <span class="tk-pn">=</span> <span class="tk-num">2</span><span class="tk-pn">,</span>
+    <span class="tk-key">max_tokens</span> <span class="tk-pn">=</span> <span class="tk-num">2000</span><span class="tk-pn">,</span>
+<span class="tk-pn">)</span>
+
+<span class="tk-cm"># result.messages     → ordered list</span>
+<span class="tk-cm"># result.total_tokens → token count</span>
+<span class="tk-cm"># result.strategy_used</span>
+
+<span class="tk-cm"># inject directly into your LLM</span>
+<span class="tk-obj">response</span> <span class="tk-pn">=</span> <span class="tk-obj">llm</span><span class="tk-pn">.</span><span class="tk-fn">chat</span><span class="tk-pn">(</span>
+    <span class="tk-key">context</span><span class="tk-pn">=</span><span class="tk-obj">result</span><span class="tk-pn">.</span><span class="tk-obj">messages</span><span class="tk-pn">,</span>
+    <span class="tk-key">query</span><span class="tk-pn">=</span><span class="tk-obj">user_message</span><span class="tk-pn">,</span>
+<span class="tk-pn">)</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Layer 2 Cards ─────────────────────────────────────────────── -->
+<section class="section">
+  <div class="container">
+    <h4 class="section-tag">Layer 2</h4>
+    <h2 class="section-title">Topic Intelligence</h2>
+    <p class="section-sub">
+      As your conversation grows, GraphMem clusters messages into topics using Louvain
+      community detection. These topic APIs give you fine-grained control over what
+      goes into your LLM's context — and how many tokens you spend.
+    </p>
+
+    <div class="cards-grid">
+
+      <!-- list -->
+      <div class="card">
+        <span class="card-method">gm.topics.list()</span>
+        <div class="card-title">Conversation map</div>
+        <div class="card-desc">
+          Returns every topic discovered in a conversation — id, label, message count,
+          last active time. The entry point to the entire topic layer.
+        </div>
+      </div>
+
+      <!-- current -->
+      <div class="card">
+        <span class="card-method">gm.topics.current()</span>
+        <div class="card-title">Conversation state</div>
+        <div class="card-desc">
+          What topic is the conversation in <em>right now</em> — based on the last
+          complete message node, not the incoming query. Essential for agents that
+          need to track context shifts.
+        </div>
+      </div>
+
+      <!-- status -->
+      <div class="card">
+        <span class="card-method">gm.topics.status()</span>
+        <div class="card-title">Active · Dormant · Resolved</div>
+        <div class="card-desc">
+          Filter by topic lifecycle. Exclude resolved topics from context entirely.
+          Keep only active ones. Directly controls how aggressively token savings
+          kick in for your agent.
+        </div>
+      </div>
+
+      <!-- summary -->
+      <div class="card">
+        <span class="card-method">gm.topics.summary()</span>
+        <div class="card-title">Compress a whole topic</div>
+        <div class="card-desc">
+          One LLM-generated string replaces an entire topic's messages. When a topic
+          is relevant but not the main focus — pass the summary, not 20 raw messages.
+        </div>
+      </div>
+
+      <!-- relevance -->
+      <div class="card">
+        <span class="card-method">gm.topics.relevance()</span>
+        <div class="card-title">Score topics by query</div>
+        <div class="card-desc">
+          For a given prompt, scores all topics by semantic similarity and returns the
+          top-K. Enables two-stage retrieval — topic first, messages second — cutting
+          comparisons from N messages to just T topics.
+        </div>
+      </div>
+
+      <!-- messages -->
+      <div class="card">
+        <span class="card-method">gm.topics.messages()</span>
+        <div class="card-title">Single-topic retrieval</div>
+        <div class="card-desc">
+          Fetch all nodes that belong to one topic. Narrows context to exactly the
+          slice of the conversation that matters — nothing else.
+        </div>
+      </div>
+
+      <!-- retrieve — flagship -->
+      <div class="card card-flagship">
+        <div>
+          <span class="card-method">gm.topics.retrieve()</span>
+          <div class="card-title">Full two-stage retrieval</div>
+          <div class="card-desc" style="margin-bottom:16px;">
+            Calls <code class="mono text-accent" style="font-size:12px;">topics.relevance()</code> then
+            <code class="mono text-accent" style="font-size:12px;">topics.messages()</code> for each top-K topic in one call.
+            The most token-efficient retrieval path GraphMem offers.
+            Use when your conversation has matured enough to have multiple
+            distinct topics and you want maximum context precision.
+          </div>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot"></div>
+              <span>50 messages, 10 topics → compare against 10 centroids, not 50 embeddings</span>
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"></div>
+              <span>Combine with <code class="mono" style="font-size:12px;color:var(--text)">status()</code> to skip resolved topics entirely</span>
+            </div>
+          </div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots">
+              <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
+            </div>
+            <span class="code-filename">two_stage.py</span>
+            <button class="code-copy" onclick="copyCode(this,'retrieve-code')">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre id="retrieve-code"><span class="tk-cm"># Two-stage: topic → messages</span>
+<span class="tk-obj">ctx</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">topics</span><span class="tk-pn">.</span><span class="tk-acc">retrieve</span><span class="tk-pn">(</span>
+    <span class="tk-obj">conv_id</span><span class="tk-pn">,</span>
+    <span class="tk-key">query</span>      <span class="tk-pn">=</span> <span class="tk-obj">user_message</span><span class="tk-pn">,</span>
+    <span class="tk-key">top_n</span>      <span class="tk-pn">=</span> <span class="tk-num">3</span><span class="tk-pn">,</span>
+    <span class="tk-key">max_tokens</span> <span class="tk-pn">=</span> <span class="tk-num">1500</span><span class="tk-pn">,</span>
+<span class="tk-pn">)</span>
+
+<span class="tk-cm"># Or use summary instead of raw messages</span>
+<span class="tk-kw">for</span> <span class="tk-obj">topic</span> <span class="tk-kw">in</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">topics</span><span class="tk-pn">.</span><span class="tk-acc">list</span><span class="tk-pn">(</span><span class="tk-obj">conv_id</span><span class="tk-pn">):</span>
+    <span class="tk-obj">summary</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">topics</span><span class="tk-pn">.</span><span class="tk-acc">summary</span><span class="tk-pn">(</span><span class="tk-obj">topic</span><span class="tk-pn">[</span><span class="tk-str">"topic_id"</span><span class="tk-pn">])</span>
+    <span class="tk-obj">status</span>  <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">topics</span><span class="tk-pn">.</span><span class="tk-acc">status</span><span class="tk-pn">(</span><span class="tk-obj">topic</span><span class="tk-pn">[</span><span class="tk-str">"topic_id"</span><span class="tk-pn">])</span></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Quickstart ────────────────────────────────────────────────── -->
+<section class="section">
+  <div class="container" style="max-width:780px;">
+    <h4 class="section-tag">Quickstart</h4>
+    <h2 class="section-title">Up in two minutes.</h2>
+    <p class="section-sub">Install the SDK, create a conversation, start storing and recalling.</p>
+
+    <!-- Step 1 -->
+    <div style="margin-bottom:24px;">
+      <p style="font-size:13px;color:var(--text-3);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">1 · Install</p>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">terminal</span>
+          <button class="code-copy" onclick="copyCode(this,'install-code')">Copy</button>
+        </div>
+        <div class="code-body"><pre id="install-code">pip install graphmem-sdk</pre></div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div>
+      <p style="font-size:13px;color:var(--text-3);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">2 · Use</p>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">quickstart.py</span>
+          <button class="code-copy" onclick="copyCode(this,'qs-code')">Copy</button>
+        </div>
+        <div class="code-body">
+          <pre id="qs-code"><span class="tk-kw">from</span> <span class="tk-obj">graphmem</span> <span class="tk-kw">import</span> <span class="tk-fn">GraphMemClient</span>
+
+<span class="tk-obj">gm</span> <span class="tk-pn">=</span> <span class="tk-fn">GraphMemClient</span><span class="tk-pn">(</span>
+    <span class="tk-str">"https://api.graphmem.dev"</span><span class="tk-pn">,</span>
+    <span class="tk-key">api_key</span><span class="tk-pn">=</span><span class="tk-str">"gm_sk_..."</span><span class="tk-pn">,</span>
+<span class="tk-pn">)</span>
+
+<span class="tk-cm"># Create a conversation (one per user session)</span>
+<span class="tk-obj">conv_id</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">conversations</span><span class="tk-pn">.</span><span class="tk-acc">create</span><span class="tk-pn">()[</span><span class="tk-str">"conversation_id"</span><span class="tk-pn">]</span>
+
+<span class="tk-cm"># Your agent loop</span>
+<span class="tk-kw">while</span> <span class="tk-obj">True</span><span class="tk-pn">:</span>
+    <span class="tk-obj">user_msg</span> <span class="tk-pn">=</span> <span class="tk-fn">input</span><span class="tk-pn">(</span><span class="tk-str">"You: "</span><span class="tk-pn">)</span>
+
+    <span class="tk-cm"># 1. Store the prompt, get memory_id back</span>
+    <span class="tk-obj">mid</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">add_prompt</span><span class="tk-pn">(</span><span class="tk-obj">conv_id</span><span class="tk-pn">,</span> <span class="tk-obj">user_msg</span><span class="tk-pn">)</span>
+
+    <span class="tk-cm"># 2. Recall relevant context from the graph</span>
+    <span class="tk-obj">ctx</span> <span class="tk-pn">=</span> <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">recall</span><span class="tk-pn">(</span><span class="tk-obj">conv_id</span><span class="tk-pn">,</span> <span class="tk-key">query</span><span class="tk-pn">=</span><span class="tk-obj">user_msg</span><span class="tk-pn">,</span> <span class="tk-key">max_tokens</span><span class="tk-pn">=</span><span class="tk-num">2000</span><span class="tk-pn">)</span>
+
+    <span class="tk-cm"># 3. Call your LLM with the relevant context</span>
+    <span class="tk-obj">reply</span> <span class="tk-pn">=</span> <span class="tk-obj">your_llm</span><span class="tk-pn">.</span><span class="tk-fn">chat</span><span class="tk-pn">(</span><span class="tk-key">context</span><span class="tk-pn">=</span><span class="tk-obj">ctx</span><span class="tk-pn">[</span><span class="tk-str">"messages"</span><span class="tk-pn">],</span> <span class="tk-key">query</span><span class="tk-pn">=</span><span class="tk-obj">user_msg</span><span class="tk-pn">)</span>
+
+    <span class="tk-cm"># 4. Store the response to complete the memory node</span>
+    <span class="tk-obj">gm</span><span class="tk-pn">.</span><span class="tk-acc">memory</span><span class="tk-pn">.</span><span class="tk-acc">add_response</span><span class="tk-pn">(</span><span class="tk-obj">mid</span><span class="tk-pn">,</span> <span class="tk-obj">conv_id</span><span class="tk-pn">,</span> <span class="tk-obj">reply</span><span class="tk-pn">)</span>
+    <span class="tk-fn">print</span><span class="tk-pn">(</span><span class="tk-str">f"Agent: <span class="tk-pn">{</span><span class="tk-obj">reply</span><span class="tk-pn">}</span>"</span><span class="tk-pn">)</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:40px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <a href="/signup" class="btn btn-primary">Get your API key →</a>
+      <a href="/reference" class="btn btn-secondary">Full API reference</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:10px;">
+        <span class="logo-icon">⬡</span> GraphMem
+      </div>
+      <p>Adaptive context engine for LLM agents.<br>Stop paying for tokens you don't need.</p>
+    </div>
+    <div>
+      <div class="footer-col-label">Product</div>
+      <div class="footer-links">
+        <a href="/reference" class="footer-link">Documentation</a>
+        <a href="/reference" class="footer-link">API Reference</a>
+        <a href="/playground" class="footer-link">Playground</a>
+        <a href="https://github.com/avik22835/graphmem" class="footer-link" target="_blank">GitHub ↗</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-label">Account</div>
+      <div class="footer-links">
+        <a href="/signup" class="footer-link">Sign up</a>
+        <a href="/login" class="footer-link">Log in</a>
+        <a href="/dashboard" class="footer-link">API Keys</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyCode(btn, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>

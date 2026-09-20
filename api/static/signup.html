@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign up — GraphMem</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+
+    <a href="/" class="auth-logo">
+      <span class="logo-icon">⬡</span>
+      GraphMem
+    </a>
+
+    <!-- Step 1: Register -->
+    <div id="stepRegister">
+      <h1 class="auth-title">Create account</h1>
+      <p class="auth-sub">Start with a free account. No credit card required.</p>
+
+      <form id="registerForm" autocomplete="on">
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input
+            type="email" id="email" name="email"
+            class="form-input" placeholder="you@example.com"
+            autocomplete="email" required
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input
+            type="password" id="password" name="new-password"
+            class="form-input" placeholder="Min. 8 characters"
+            autocomplete="new-password" required minlength="8"
+          />
+          <span class="form-hint">Must include a number and uppercase letter.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm">Confirm password</label>
+          <input
+            type="password" id="confirm" name="confirm-password"
+            class="form-input" placeholder="••••••••"
+            autocomplete="new-password" required
+          />
+        </div>
+
+        <div id="regError" class="form-error hidden" style="margin-bottom:14px;"></div>
+
+        <button type="submit" class="btn btn-primary w-full" id="regBtn">
+          Create account
+        </button>
+      </form>
+
+      <p class="auth-footer mt-24">
+        Already have an account? <a href="/login">Log in →</a>
+      </p>
+    </div>
+
+    <!-- Step 2: Verify email -->
+    <div id="stepVerify" class="hidden">
+      <h1 class="auth-title">Check your email</h1>
+      <p class="auth-sub" id="verifySubtitle">
+        We sent a 6-digit code to your email. Enter it below to confirm your account.
+      </p>
+
+      <form id="verifyForm">
+        <div class="form-group">
+          <label class="form-label" for="code">Verification code</label>
+          <input
+            type="text" id="code"
+            class="form-input mono" placeholder="123456"
+            inputmode="numeric" maxlength="6" required
+            style="font-size:22px;letter-spacing:0.2em;text-align:center;"
+          />
+        </div>
+
+        <div id="verifyError" class="form-error hidden" style="margin-bottom:14px;"></div>
+
+        <button type="submit" class="btn btn-primary w-full" id="verifyBtn">
+          Confirm &amp; continue
+        </button>
+      </form>
+
+      <p class="auth-footer mt-24">
+        Didn't receive it? <a href="#" id="resendLink">Resend code</a>
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<script src="/static/js/auth.js"></script>
+<script>
+  if (gmIsAuthenticated()) window.location.href = '/dashboard';
+
+  let _email = '';
+
+  // ── Register ──────────────────────────────────────────────────
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm  = document.getElementById('confirm').value;
+    const btn      = document.getElementById('regBtn');
+    const err      = document.getElementById('regError');
+
+    if (password !== confirm) {
+      err.textContent = 'Passwords do not match.';
+      err.classList.remove('hidden');
+      return;
+    }
+
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled  = true;
+    err.classList.add('hidden');
+
+    try {
+      await gmSignUp(email, password);
+      _email = email;
+      document.getElementById('verifySubtitle').textContent =
+        `We sent a 6-digit code to ${email}. Enter it below to confirm your account.`;
+      document.getElementById('stepRegister').classList.add('hidden');
+      document.getElementById('stepVerify').classList.remove('hidden');
+      document.getElementById('code').focus();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+      btn.textContent = 'Create account';
+      btn.disabled    = false;
+    }
+  });
+
+  // ── Verify ────────────────────────────────────────────────────
+  document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = document.getElementById('code').value.trim();
+    const btn  = document.getElementById('verifyBtn');
+    const err  = document.getElementById('verifyError');
+
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled  = true;
+    err.classList.add('hidden');
+
+    try {
+      await gmConfirmSignUp(_email, code);
+      // Auto sign-in after confirm
+      const pw = document.getElementById('password')?.value;
+      if (pw) {
+        try { await gmSignIn(_email, pw); } catch {}
+      }
+      window.location.href = '/dashboard';
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+      btn.textContent = 'Confirm & continue';
+      btn.disabled    = false;
+    }
+  });
+
+  // ── Resend ────────────────────────────────────────────────────
+  document.getElementById('resendLink').addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!_email) return;
+    try {
+      await _cognito('ResendConfirmationCode', {
+        ClientId: COGNITO_CLIENT_ID, Username: _email,
+      });
+      document.getElementById('verifyError').textContent = 'Code resent.';
+      document.getElementById('verifyError').style.color = 'var(--accent)';
+      document.getElementById('verifyError').classList.remove('hidden');
+    } catch (ex) {
+      document.getElementById('verifyError').textContent = ex.message;
+      document.getElementById('verifyError').style.color = 'var(--red)';
+      document.getElementById('verifyError').classList.remove('hidden');
+    }
+  });
+</script>
+</body>
+</html>

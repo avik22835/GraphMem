@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference — GraphMem</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span class="logo-icon">⬡</span>GraphMem</a>
+    <a href="/" class="nav-link">Home</a>
+    <a href="/reference" class="nav-link active">Reference</a>
+    <a href="/playground" class="nav-link">Playground</a>
+    <div class="nav-right">
+      <div class="nav-divider"></div>
+      <a href="/login" class="nav-link">Log in</a>
+      <a href="/signup" class="btn btn-ghost btn-sm">Get API Key</a>
+    </div>
+  </div>
+</nav>
+
+<div class="reference-wrap">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="ref-sidebar">
+
+    <div class="ref-sidebar-section">
+      <span class="ref-sidebar-label">Get Started</span>
+      <a href="#create-conversation" class="ref-sidebar-featured"><span class="star">✦</span>Create conversation</a>
+      <a href="#add-prompt"          class="ref-sidebar-featured"><span class="star">✦</span>Add prompt</a>
+      <a href="#recall"              class="ref-sidebar-featured"><span class="star">✦</span>Recall</a>
+      <a href="#topics-retrieve"     class="ref-sidebar-featured"><span class="star">✦</span>Topic retrieve</a>
+    </div>
+
+    <div class="ref-sidebar-section">
+      <span class="ref-sidebar-label">Conversations</span>
+      <a href="#create-conversation"  class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Create</a>
+      <a href="#list-conversations"   class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>List</a>
+      <a href="#conv-stats"           class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Stats</a>
+      <a href="#conv-export"          class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Export</a>
+      <a href="#conv-delete"          class="ref-sidebar-link"><span class="http http-delete" style="font-size:9px;">DEL</span>Delete</a>
+    </div>
+
+    <div class="ref-sidebar-section">
+      <span class="ref-sidebar-label">Memory</span>
+      <a href="#add-prompt"       class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Add prompt</a>
+      <a href="#add-response"     class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Add response</a>
+      <a href="#add-batch"        class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Add batch</a>
+      <a href="#recall"           class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Recall</a>
+      <a href="#get-node"         class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Get node</a>
+      <a href="#neighbours"       class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Neighbours</a>
+      <a href="#delete-node"      class="ref-sidebar-link"><span class="http http-delete" style="font-size:9px;">DEL</span>Delete node</a>
+    </div>
+
+    <div class="ref-sidebar-section">
+      <span class="ref-sidebar-label">Topics</span>
+      <a href="#topics-list"      class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>List</a>
+      <a href="#topics-current"   class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Current</a>
+      <a href="#topics-status"    class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Status</a>
+      <a href="#topics-summary"   class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Summary</a>
+      <a href="#topics-relevance" class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Relevance</a>
+      <a href="#topics-messages"  class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Messages</a>
+      <a href="#topics-retrieve"  class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Retrieve</a>
+      <a href="#topics-get"       class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Get topic</a>
+      <a href="#topics-recompute" class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Recompute</a>
+    </div>
+
+    <div class="ref-sidebar-section">
+      <span class="ref-sidebar-label">Auth</span>
+      <a href="#auth-create" class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Create key</a>
+      <a href="#auth-list"   class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>List keys</a>
+      <a href="#auth-revoke" class="ref-sidebar-link"><span class="http http-delete" style="font-size:9px;">DEL</span>Revoke key</a>
+    </div>
+
+    <div class="ref-sidebar-section">
+      <span class="ref-sidebar-label">Utils</span>
+      <a href="#count-tokens" class="ref-sidebar-link"><span class="http http-post" style="font-size:9px;">POST</span>Count tokens</a>
+      <a href="#health"       class="ref-sidebar-link"><span class="http http-get"  style="font-size:9px;">GET</span>Health</a>
+    </div>
+
+  </aside>
+
+  <!-- ── Content ─────────────────────────────────────────────── -->
+  <main class="ref-content">
+
+    <h1>API Reference</h1>
+    <p style="color:var(--text-2);font-size:16px;margin-bottom:12px;line-height:1.7;">
+      All endpoints are served at your base URL. Authenticate with
+      <code class="mono text-accent" style="font-size:13px;">X-API-Key: gm_sk_...</code> header
+      (or <code class="mono text-accent" style="font-size:13px;">Authorization: Bearer &lt;JWT&gt;</code> for key management).
+    </p>
+    <div style="display:flex;gap:10px;margin-bottom:56px;flex-wrap:wrap;">
+      <a href="/signup" class="btn btn-primary btn-sm">Get API key →</a>
+      <a href="/playground" class="btn btn-secondary btn-sm">Try in Playground</a>
+    </div>
+
+    <!-- ════════════════════════════════ CONVERSATIONS ══════════ -->
+    <h2 style="margin-bottom:8px;font-size:22px;">Conversations</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:0;line-height:1.7;">
+      A conversation is the top-level container for a session. All memory nodes and topics belong to one conversation.
+    </p>
+
+    <!-- create-conversation -->
+    <div class="endpoint-block" id="create-conversation">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/conversations</span>
+      </div>
+      <p class="endpoint-desc">Create a new conversation. Returns a <code class="mono" style="font-size:12px;">conversation_id</code> — pass this to all memory and topic calls.</p>
+
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>metadata <span class="optional">optional</span></td><td>object</td><td>Arbitrary key-value pairs attached to this conversation.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-wrap">
+        <div class="example-tabs">
+          <button class="example-tab active" onclick="switchTab(this,'ex-create-conv-req','ex-create-conv')">Request</button>
+          <button class="example-tab" onclick="switchTab(this,'ex-create-conv-res','ex-create-conv')">Response</button>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-filename" id="ex-create-conv-filename">request</span><button class="code-copy" onclick="copyCode(this,'ex-create-conv-active')">Copy</button></div>
+          <div class="code-body"><pre id="ex-create-conv-req" class="ex-create-conv-pane">POST /conversations
+Content-Type: application/json
+X-API-Key: gm_sk_...
+
+{
+  "metadata": { "user_id": "u_123" }
+}</pre><pre id="ex-create-conv-res" class="ex-create-conv-pane hidden">{
+  "conversation_id": "3f7a1b2c-..."
+}</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- list-conversations -->
+    <div class="endpoint-block" id="list-conversations">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/conversations</span>
+      </div>
+      <p class="endpoint-desc">List all conversations. Returns node count and last topic recompute time.</p>
+    </div>
+
+    <!-- conv-stats -->
+    <div class="endpoint-block" id="conv-stats">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/conversations/{conversation_id}/stats</span>
+      </div>
+      <p class="endpoint-desc">Graph statistics for a conversation — node count, edge count, topic count, average degree, graph density.</p>
+    </div>
+
+    <!-- conv-export -->
+    <div class="endpoint-block" id="conv-export">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/conversations/{conversation_id}/export</span>
+      </div>
+      <p class="endpoint-desc">Export all memory nodes in a conversation as a JSON array.</p>
+    </div>
+
+    <!-- conv-delete -->
+    <div class="endpoint-block" id="conv-delete">
+      <div class="endpoint-path-row">
+        <span class="http http-delete">DELETE</span>
+        <span class="endpoint-path">/conversations/{conversation_id}</span>
+      </div>
+      <p class="endpoint-desc">Delete a conversation and all its nodes, edges, and topics. Irreversible.</p>
+    </div>
+
+    <!-- ════════════════════════════════ MEMORY ══════════════════ -->
+    <h2 style="margin-top:16px;margin-bottom:8px;font-size:22px;">Memory</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:0;line-height:1.7;">
+      Memory nodes are prompt + response pairs. A node becomes <em>complete</em> once both parts are stored — at which point it is embedded and wired into the graph asynchronously via Lambda.
+    </p>
+
+    <!-- add-prompt -->
+    <div class="endpoint-block" id="add-prompt">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/memory/prompt</span>
+      </div>
+      <p class="endpoint-desc">Store a user prompt. Returns a <code class="mono" style="font-size:12px;">memory_id</code> — pass this to <code class="mono" style="font-size:12px;">add_response</code> to complete the node.</p>
+
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string (uuid)</td><td>Conversation this prompt belongs to.</td></tr>
+          <tr><td>content <span class="required">required</span></td><td>string</td><td>The user's message text.</td></tr>
+          <tr><td>timestamp <span class="optional">optional</span></td><td>ISO 8601</td><td>Defaults to server time.</td></tr>
+          <tr><td>metadata <span class="optional">optional</span></td><td>object</td><td>Arbitrary key-value pairs.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-wrap">
+        <div class="example-tabs">
+          <button class="example-tab active" onclick="switchTab(this,'ex-prompt-req','ex-prompt')">Request</button>
+          <button class="example-tab" onclick="switchTab(this,'ex-prompt-res','ex-prompt')">Response</button>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-filename" id="ex-prompt-filename">request</span><button class="code-copy" onclick="copyCode(this,'ex-prompt-active')">Copy</button></div>
+          <div class="code-body"><pre id="ex-prompt-req" class="ex-prompt-pane">POST /memory/prompt
+X-API-Key: gm_sk_...
+
+{
+  "conversation_id": "3f7a1b2c-...",
+  "content": "How does async/await work in Python?"
+}</pre><pre id="ex-prompt-res" class="ex-prompt-pane hidden">{
+  "memory_id": "9e4c3d2a-..."
+}</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- add-response -->
+    <div class="endpoint-block" id="add-response">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/memory/{memory_id}/response</span>
+      </div>
+      <p class="endpoint-desc">Attach the assistant's response to a pending node. This completes the node and immediately queues it for embedding + graph insertion via SQS → Lambda.</p>
+
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string (uuid)</td><td>Must match the conversation from <code class="mono" style="font-size:12px;">add_prompt</code>.</td></tr>
+          <tr><td>content <span class="required">required</span></td><td>string</td><td>The assistant's response text.</td></tr>
+          <tr><td>timestamp <span class="optional">optional</span></td><td>ISO 8601</td><td>Defaults to server time.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- add-batch -->
+    <div class="endpoint-block" id="add-batch">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/memory/batch</span>
+      </div>
+      <p class="endpoint-desc">Add up to 100 complete prompt + response pairs in a single call. All nodes are immediately queued for embedding. Use this to pre-load existing conversation history.</p>
+
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>items <span class="required">required</span></td><td>array</td><td>Array of up to 100 objects, each with <code class="mono" style="font-size:12px;">conversation_id</code>, <code class="mono" style="font-size:12px;">prompt</code>, <code class="mono" style="font-size:12px;">response</code>, optional <code class="mono" style="font-size:12px;">timestamp_prompt</code>, <code class="mono" style="font-size:12px;">timestamp_response</code>, <code class="mono" style="font-size:12px;">metadata</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- recall -->
+    <div class="endpoint-block" id="recall">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/memory/recall</span>
+      </div>
+      <p class="endpoint-desc">
+        The core retrieval method. Embeds the query, runs a multi-set graph traversal, applies a token budget, and returns ordered context ready to inject into your LLM.
+        Returns the union of Set B (top-K by cosine), Set A' (threshold neighbours), Set C (Neptune 1-hop expansion), and Set R (recency guard).
+      </p>
+
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string</td><td>Which conversation to search.</td></tr>
+          <tr><td>query <span class="required">required</span></td><td>string</td><td>The current user message or search query.</td></tr>
+          <tr><td>k <span class="optional">optional</span></td><td>integer 1–50</td><td>Top-K nodes for Set B. Defaults to server config (5).</td></tr>
+          <tr><td>threshold <span class="optional">optional</span></td><td>float 0–1</td><td>Cosine similarity threshold for Set A'. Default 0.4.</td></tr>
+          <tr><td>strategy <span class="optional">optional</span></td><td>"semantic" | "semantic_recency"</td><td>Scoring strategy for Set B. <code class="mono" style="font-size:12px;">semantic_recency</code> blends cosine with recency decay.</td></tr>
+          <tr><td>recency_alpha <span class="optional">optional</span></td><td>float 0–1</td><td>Weight of cosine vs recency when strategy is <code class="mono" style="font-size:12px;">semantic_recency</code>. Default 0.7.</td></tr>
+          <tr><td>recency_half_life <span class="optional">optional</span></td><td>float (seconds)</td><td>How fast recency score decays.</td></tr>
+          <tr><td>always_include_recent <span class="optional">optional</span></td><td>integer 0–20</td><td>Always include last N nodes regardless of relevance (Set R). Exempt from token budget cuts.</td></tr>
+          <tr><td>max_tokens <span class="optional">optional</span></td><td>integer</td><td>Token budget for the returned context. Nodes cut by relevance score first.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-wrap">
+        <div class="example-tabs">
+          <button class="example-tab active" onclick="switchTab(this,'ex-recall-req','ex-recall')">Request</button>
+          <button class="example-tab" onclick="switchTab(this,'ex-recall-res','ex-recall')">Response</button>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-filename" id="ex-recall-filename">request</span><button class="code-copy" onclick="copyCode(this,'ex-recall-active')">Copy</button></div>
+          <div class="code-body"><pre id="ex-recall-req" class="ex-recall-pane">POST /memory/recall
+X-API-Key: gm_sk_...
+
+{
+  "conversation_id": "3f7a1b2c-...",
+  "query": "How does async/await work?",
+  "k": 5,
+  "strategy": "semantic",
+  "always_include_recent": 2,
+  "max_tokens": 2000
+}</pre><pre id="ex-recall-res" class="ex-recall-pane hidden">{
+  "messages": [
+    {
+      "memory_id": "9e4c3d2a-...",
+      "prompt": "How does async/await work?",
+      "response": "async/await is built on coroutines...",
+      "score": 0.921,
+      "set_membership": "B",
+      "timestamp_prompt": "2026-09-20T10:00:00Z",
+      "token_count": 142
+    }
+  ],
+  "total_tokens": 142,
+  "strategy_used": "semantic",
+  "node_count": 1
+}</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- get-node -->
+    <div class="endpoint-block" id="get-node">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/memory/{memory_id}</span>
+      </div>
+      <p class="endpoint-desc">Fetch a single memory node by ID. Returns prompt, response, timestamps, status, and metadata. Embedding vector is not included.</p>
+    </div>
+
+    <!-- neighbours -->
+    <div class="endpoint-block" id="neighbours">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/memory/{memory_id}/neighbours</span>
+      </div>
+      <p class="endpoint-desc">Return graph neighbours of a node — other nodes connected by a cosine-similarity edge above the given threshold.</p>
+      <p class="params-label">Query params</p>
+      <table class="params-table">
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>threshold <span class="optional">optional</span></td><td>float</td><td>Minimum edge weight. Default 0.7.</td></tr>
+          <tr><td>limit <span class="optional">optional</span></td><td>integer</td><td>Max neighbours to return.</td></tr>
+          <tr><td>order <span class="optional">optional</span></td><td>"relevance" | "timestamp"</td><td>Sort order. Default relevance.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- delete-node -->
+    <div class="endpoint-block" id="delete-node">
+      <div class="endpoint-path-row">
+        <span class="http http-delete">DELETE</span>
+        <span class="endpoint-path">/memory/{memory_id}</span>
+      </div>
+      <p class="endpoint-desc">Delete a memory node. If it belonged to a topic, that topic is marked dirty and will be re-evaluated on the next recompute.</p>
+    </div>
+
+    <!-- ════════════════════════════════ TOPICS ══════════════════ -->
+    <h2 style="margin-top:16px;margin-bottom:8px;font-size:22px;">Topics</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:0;line-height:1.7;">
+      Topics are message clusters auto-detected via Louvain community detection every 20 nodes. Each is labeled and summarized by Groq. Use them for fine-grained context control.
+    </p>
+
+    <!-- topics-list -->
+    <div class="endpoint-block" id="topics-list">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics?conversation_id={id}</span>
+      </div>
+      <p class="endpoint-desc">List all topics for a conversation. Returns id, label, message count, status, and last active time. The entry point to all topic operations.</p>
+      <p class="params-label">Query params</p>
+      <table class="params-table">
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string</td><td>Conversation to list topics for.</td></tr>
+          <tr><td>status <span class="optional">optional</span></td><td>"active" | "dormant" | "resolved"</td><td>Filter by topic status.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- topics-current -->
+    <div class="endpoint-block" id="topics-current">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics/current?conversation_id={id}</span>
+      </div>
+      <p class="endpoint-desc">
+        Returns the topic the conversation is currently in — based on the last <em>complete</em> message node, not the incoming query.
+        Essential for agents that need to track topic shifts without sending a query.
+      </p>
+      <p class="params-label">Query params</p>
+      <table class="params-table">
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string</td><td></td></tr>
+          <tr><td>mode <span class="optional">optional</span></td><td>"centroid" | "hybrid" | "llm"</td><td>How to compute topic match. <code class="mono" style="font-size:12px;">llm</code> and <code class="mono" style="font-size:12px;">hybrid</code> require summaries to exist. Default centroid.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- topics-status -->
+    <div class="endpoint-block" id="topics-status">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics/{topic_id}/status</span>
+      </div>
+      <p class="endpoint-desc">
+        Returns <code class="mono" style="font-size:12px;">"active"</code>, <code class="mono" style="font-size:12px;">"dormant"</code>, or <code class="mono" style="font-size:12px;">"resolved"</code>.
+        Use this to filter which topics contribute to context — skip resolved ones, keep active, optionally include dormant.
+        Directly controls how aggressively token savings kick in.
+      </p>
+    </div>
+
+    <!-- topics-summary -->
+    <div class="endpoint-block" id="topics-summary">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics/{topic_id}/summary</span>
+      </div>
+      <p class="endpoint-desc">
+        Returns an LLM-generated summary string for the entire topic. When a topic is relevant but not the primary focus,
+        inject the summary instead of all its raw messages — significantly fewer tokens for the same semantic coverage.
+      </p>
+    </div>
+
+    <!-- topics-relevance -->
+    <div class="endpoint-block" id="topics-relevance">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics/relevance?conversation_id={id}&amp;query={q}</span>
+      </div>
+      <p class="endpoint-desc">
+        Score all topics against a query and return the top-N most relevant, ranked by cosine similarity to their centroids.
+        Enables two-stage retrieval: compare against T topic centroids instead of N individual messages.
+      </p>
+      <p class="params-label">Query params</p>
+      <table class="params-table">
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string</td><td></td></tr>
+          <tr><td>query <span class="required">required</span></td><td>string</td><td>The prompt or search query.</td></tr>
+          <tr><td>top_n <span class="optional">optional</span></td><td>integer 1–20</td><td>How many topics to return. Default 3.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- topics-messages -->
+    <div class="endpoint-block" id="topics-messages">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics/{topic_id}/messages</span>
+      </div>
+      <p class="endpoint-desc">Retrieve all memory nodes that belong to a single topic. Optionally narrow further with a query, and apply a token budget.</p>
+      <p class="params-label">Query params</p>
+      <table class="params-table">
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string</td><td></td></tr>
+          <tr><td>query <span class="optional">optional</span></td><td>string</td><td>Further narrow results by similarity.</td></tr>
+          <tr><td>max_tokens <span class="optional">optional</span></td><td>integer</td><td>Token budget for returned messages.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- topics-retrieve -->
+    <div class="endpoint-block" id="topics-retrieve">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/topics/retrieve</span>
+      </div>
+      <p class="endpoint-desc">
+        Full two-stage retrieval in one call. Internally runs <code class="mono" style="font-size:12px;">topics/relevance</code>
+        to find the top-N matching topics, then retrieves messages from each.
+        The most token-efficient retrieval path — compare T topic centroids, not N messages.
+      </p>
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>conversation_id <span class="required">required</span></td><td>string</td><td></td></tr>
+          <tr><td>query <span class="required">required</span></td><td>string</td><td>The current user prompt.</td></tr>
+          <tr><td>top_n <span class="optional">optional</span></td><td>integer 1–20</td><td>How many topics to pull from. Default 3.</td></tr>
+          <tr><td>max_tokens <span class="optional">optional</span></td><td>integer</td><td>Total token budget for the returned messages.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- topics-get -->
+    <div class="endpoint-block" id="topics-get">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/topics/{topic_id}</span>
+      </div>
+      <p class="endpoint-desc">Full topic object: label, description, summary, coherence score, is_mixed flag, sub-themes, status, message count, last active, is_dirty.</p>
+    </div>
+
+    <!-- topics-recompute -->
+    <div class="endpoint-block" id="topics-recompute">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/topics/recompute?conversation_id={id}</span>
+      </div>
+      <p class="endpoint-desc">Manually trigger Louvain clustering + Groq labeling for a conversation. Topics are auto-recomputed every 20 nodes — use this to force an early recompute.</p>
+    </div>
+
+    <!-- ════════════════════════════════ AUTH ════════════════════ -->
+    <h2 style="margin-top:16px;margin-bottom:8px;font-size:22px;">Auth</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:0;line-height:1.7;">
+      Key management endpoints require a Cognito JWT (<code class="mono" style="font-size:12px;">Authorization: Bearer &lt;id_token&gt;</code>), not an API key.
+    </p>
+
+    <div class="endpoint-block" id="auth-create">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/auth/keys</span>
+      </div>
+      <p class="endpoint-desc">Create an API key. The full key is returned once — it cannot be retrieved again. Requires JWT.</p>
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>project_name <span class="optional">optional</span></td><td>string</td><td>A label for this key.</td></tr>
+          <tr><td>permissions <span class="optional">optional</span></td><td>object</td><td><code class="mono" style="font-size:12px;">{"read": true, "write": true}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="endpoint-block" id="auth-list">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/auth/keys</span>
+      </div>
+      <p class="endpoint-desc">List all API keys for the authenticated Cognito user. Full key values are never returned — only prefix, status, and metadata.</p>
+    </div>
+
+    <div class="endpoint-block" id="auth-revoke">
+      <div class="endpoint-path-row">
+        <span class="http http-delete">DELETE</span>
+        <span class="endpoint-path">/auth/keys/{key_id}</span>
+      </div>
+      <p class="endpoint-desc">Revoke an API key immediately. Requires JWT. The key is marked inactive — any requests using it will return 401.</p>
+    </div>
+
+    <!-- ════════════════════════════════ UTILS ══════════════════ -->
+    <h2 style="margin-top:16px;margin-bottom:8px;font-size:22px;">Utils</h2>
+
+    <div class="endpoint-block" id="count-tokens">
+      <div class="endpoint-path-row">
+        <span class="http http-post">POST</span>
+        <span class="endpoint-path">/utils/count_tokens</span>
+      </div>
+      <p class="endpoint-desc">Estimate the token count for any string using the same tokenizer GraphMem uses internally for token budgeting.</p>
+      <p class="params-label">Body</p>
+      <table class="params-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>text <span class="required">required</span></td><td>string</td><td>Text to count tokens for.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="endpoint-block" id="health">
+      <div class="endpoint-path-row">
+        <span class="http http-get">GET</span>
+        <span class="endpoint-path">/health</span>
+      </div>
+      <p class="endpoint-desc">Liveness check. No auth required. Returns <code class="mono" style="font-size:12px;">{"status": "ok"}</code> when the API is up.</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Tab switching for examples
+  function switchTab(btn, showId, group) {
+    // Update tab styles
+    btn.closest('.example-tabs').querySelectorAll('.example-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    // Show/hide panes
+    document.querySelectorAll(`.${group}-pane`).forEach(p => p.classList.add('hidden'));
+    document.getElementById(showId).classList.remove('hidden');
+    // Update filename label
+    const filename = document.getElementById(`${group}-filename`);
+    if (filename) filename.textContent = btn.textContent.trim().toLowerCase();
+  }
+
+  // Copy with a hidden proxy element
+  function copyCode(btn, proxyId) {
+    // Find the currently visible pane under the same code-block
+    const block = btn.closest('.code-block');
+    const visible = block.querySelector('pre:not(.hidden)');
+    if (!visible) return;
+    navigator.clipboard.writeText(visible.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Active sidebar link on scroll
+  const sections = document.querySelectorAll('.endpoint-block[id], h2[id]');
+  const links    = document.querySelectorAll('.ref-sidebar-link, .ref-sidebar-featured');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.ref-sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
