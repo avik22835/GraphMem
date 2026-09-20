@@ -165,9 +165,7 @@
     e.preventDefault();
     if (!_email) return;
     try {
-      await _cognito('ResendConfirmationCode', {
-        ClientId: COGNITO_CLIENT_ID, Username: _email,
-      });
+      await gmResend(_email);
       document.getElementById('verifyError').textContent = 'Code resent.';
       document.getElementById('verifyError').style.color = 'var(--accent)';
       document.getElementById('verifyError').classList.remove('hidden');

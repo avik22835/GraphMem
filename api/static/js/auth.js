@@ -1,50 +1,35 @@
-const COGNITO_REGION    = 'us-east-1';
-const COGNITO_CLIENT_ID = '706dfajvla7jbsgllh22ki5c45';
-const COGNITO_URL       = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`;
+/* GraphMem auth helpers — calls backend proxy, not Cognito directly */
 
-async function _cognito(target, body) {
-  const resp = await fetch(COGNITO_URL, {
+async function _api(path, body) {
+  const r = await fetch(path, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-amz-json-1.1',
-      'X-Amz-Target': `AmazonCognitoIdentityProviderService.${target}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.message || data.__type || 'Authentication error');
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || 'Authentication error');
   return data;
 }
 
 async function gmSignUp(email, password) {
-  return _cognito('SignUp', {
-    ClientId: COGNITO_CLIENT_ID,
-    Username: email,
-    Password: password,
-    UserAttributes: [{ Name: 'email', Value: email }],
-  });
+  return _api('/auth/signup', { email, password });
 }
 
 async function gmConfirmSignUp(email, code) {
-  return _cognito('ConfirmSignUp', {
-    ClientId: COGNITO_CLIENT_ID,
-    Username: email,
-    ConfirmationCode: code.trim(),
-  });
+  return _api('/auth/confirm', { email, code });
 }
 
 async function gmSignIn(email, password) {
-  const data = await _cognito('InitiateAuth', {
-    AuthFlow: 'USER_PASSWORD_AUTH',
-    ClientId: COGNITO_CLIENT_ID,
-    AuthParameters: { USERNAME: email, PASSWORD: password },
-  });
-  const t = data.AuthenticationResult;
-  localStorage.setItem('gm_id_token',      t.IdToken);
-  localStorage.setItem('gm_access_token',  t.AccessToken);
-  localStorage.setItem('gm_refresh_token', t.RefreshToken);
+  const data = await _api('/auth/signin', { email, password });
+  localStorage.setItem('gm_id_token',      data.id_token);
+  localStorage.setItem('gm_access_token',  data.access_token);
+  localStorage.setItem('gm_refresh_token', data.refresh_token);
   localStorage.setItem('gm_email',         email);
-  return t;
+  return data;
+}
+
+async function gmResend(email) {
+  return _api('/auth/resend', { email });
 }
 
 function gmSignOut() {
@@ -52,9 +37,10 @@ function gmSignOut() {
   window.location.href = '/login';
 }
 
-function gmGetIdToken()       { return localStorage.getItem('gm_id_token') || ''; }
-function gmGetEmail()         { return localStorage.getItem('gm_email') || ''; }
-function gmIsAuthenticated()  { return !!localStorage.getItem('gm_id_token'); }
+function gmGetIdToken()      { return localStorage.getItem('gm_id_token')  || ''; }
+function gmGetEmail()        { return localStorage.getItem('gm_email')     || ''; }
+function gmGetApiKey()       { return localStorage.getItem('gm_api_key')   || ''; }
+function gmIsAuthenticated() { return !!localStorage.getItem('gm_id_token'); }
 
 function gmRequireAuth() {
   if (!gmIsAuthenticated()) {
