@@ -39,6 +39,26 @@ jobs:
             -f workers/topic_worker/Dockerfile workers/topic_worker/
           docker push 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker
 
+      - name: Update node-worker Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name graphmem-node-worker \
+            --image-uri 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:node-worker \
+            --region us-east-1
+          aws lambda wait function-updated \
+            --function-name graphmem-node-worker \
+            --region us-east-1
+
+      - name: Update topic-worker Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name graphmem-topic-worker \
+            --image-uri 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker \
+            --region us-east-1
+          aws lambda wait function-updated \
+            --function-name graphmem-topic-worker \
+            --region us-east-1
+
       - name: Register new task definition revision
         run: |
           TASK_DEF=$(aws ecs describe-task-definition --task-definition graphmem-task --query 'taskDefinition' --output json)
