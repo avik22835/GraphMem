@@ -1,3 +1,4 @@
+import json
 import pathlib
 import asyncpg
 from pgvector.asyncpg import register_vector
@@ -30,6 +31,8 @@ async def init_schema() -> None:
 
 async def _init_connection(conn: asyncpg.Connection) -> None:
     await register_vector(conn)
+    await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
+    await conn.set_type_codec("json",  encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
 
 
 async def close_pool() -> None:
