@@ -159,23 +159,31 @@ Output valid JSON only:
   "next_resolution": float
 }}"""
 
-    try:
-        resp = get_groq().chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-            temperature=0.2,
-        )
-        return json.loads(resp.choices[0].message.content)
-    except Exception as e:
-        print(f"[topic_worker] Groq labeling error: {e}")
-        return {
-            "label": "Unlabeled cluster",
-            "description": "", "summary": "",
-            "coherence": 0.5, "is_mixed": False, "sub_themes": [],
-            "status": "dormant",
-            "next_resolution": round(resolution * 1.5, 2),
-        }
+    import time
+    for attempt in range(5):
+        try:
+            resp = get_groq().chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.2,
+            )
+            return json.loads(resp.choices[0].message.content)
+        except Exception as e:
+            if "429" in str(e) or "rate" in str(e).lower():
+                wait = 2 ** attempt
+                print(f"[topic_worker] Groq 429 — retrying in {wait}s (attempt {attempt+1}/5)")
+                time.sleep(wait)
+                continue
+            print(f"[topic_worker] Groq labeling error: {e}")
+            break
+    return {
+        "label": "Unlabeled cluster",
+        "description": "", "summary": "",
+        "coherence": 0.5, "is_mixed": False, "sub_themes": [],
+        "status": "dormant",
+        "next_resolution": round(resolution * 1.5, 2),
+    }
 
 
 # ── Cluster processing (recursive, respects RECURRENCE_LIMIT) ────────────────
