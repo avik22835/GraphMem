@@ -1,5 +1,5 @@
 -- GraphMem PostgreSQL Schema
--- Run once on a fresh RDS instance
+-- Idempotent: safe to run on startup (all statements use IF NOT EXISTS)
 
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ─────────────────────────────────────────
 -- conversations
 -- ─────────────────────────────────────────
-CREATE TABLE conversations (
+CREATE TABLE IF NOT EXISTS conversations (
     conversation_id     UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
     metadata            JSONB       NOT NULL DEFAULT '{}',
     next_index          INT         NOT NULL DEFAULT 0,      -- atomic counter for node index
@@ -20,7 +20,7 @@ CREATE TABLE conversations (
 -- ─────────────────────────────────────────
 -- memory_nodes
 -- ─────────────────────────────────────────
-CREATE TABLE memory_nodes (
+CREATE TABLE IF NOT EXISTS memory_nodes (
     memory_id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id     UUID        NOT NULL REFERENCES conversations(conversation_id) ON DELETE CASCADE,
     index               INT         NOT NULL,
@@ -38,20 +38,19 @@ CREATE TABLE memory_nodes (
 );
 
 -- HNSW index for cosine similarity search (Set B in recall)
--- HNSW works without pre-training, better for dynamic inserts than IVFFlat
-CREATE INDEX memory_nodes_embedding_hnsw
+CREATE INDEX IF NOT EXISTS memory_nodes_embedding_hnsw
     ON memory_nodes USING hnsw (embedding vector_cosine_ops);
 
-CREATE INDEX memory_nodes_conv_status
+CREATE INDEX IF NOT EXISTS memory_nodes_conv_status
     ON memory_nodes (conversation_id, status);
 
-CREATE INDEX memory_nodes_conv_timestamp
+CREATE INDEX IF NOT EXISTS memory_nodes_conv_timestamp
     ON memory_nodes (conversation_id, timestamp_prompt ASC);
 
 -- ─────────────────────────────────────────
 -- topics
 -- ─────────────────────────────────────────
-CREATE TABLE topics (
+CREATE TABLE IF NOT EXISTS topics (
     topic_id            UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id     UUID        NOT NULL REFERENCES conversations(conversation_id) ON DELETE CASCADE,
     label               TEXT,
@@ -71,17 +70,17 @@ CREATE TABLE topics (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX topics_conv
+CREATE INDEX IF NOT EXISTS topics_conv
     ON topics (conversation_id, status);
 
 -- HNSW on topic centroids for current_topic() centroid mode
-CREATE INDEX topics_centroid_hnsw
+CREATE INDEX IF NOT EXISTS topics_centroid_hnsw
     ON topics USING hnsw (centroid vector_cosine_ops);
 
 -- ─────────────────────────────────────────
 -- api_keys
 -- ─────────────────────────────────────────
-CREATE TABLE api_keys (
+CREATE TABLE IF NOT EXISTS api_keys (
     key_id          UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
     key_prefix      TEXT    NOT NULL,       -- e.g. "gm_sk_A1B2C3D4" shown to dev for identification
     key_hash        TEXT    NOT NULL,       -- bcrypt hash of full key, never stored plaintext
@@ -93,5 +92,5 @@ CREATE TABLE api_keys (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX api_keys_prefix ON api_keys (key_prefix);
-CREATE INDEX api_keys_user   ON api_keys (user_id);
+CREATE INDEX IF NOT EXISTS api_keys_prefix ON api_keys (key_prefix);
+CREATE INDEX IF NOT EXISTS api_keys_user   ON api_keys (user_id);

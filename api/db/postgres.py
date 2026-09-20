@@ -1,8 +1,11 @@
+import pathlib
 import asyncpg
 from pgvector.asyncpg import register_vector
 from api.config import settings
 
 _pool: asyncpg.Pool | None = None
+
+_SCHEMA_SQL = pathlib.Path(__file__).parent / "schema.sql"
 
 
 async def init_pool() -> None:
@@ -17,6 +20,12 @@ async def init_pool() -> None:
         max_size=10,
         init=_init_connection,
     )
+
+
+async def init_schema() -> None:
+    sql = _SCHEMA_SQL.read_text()
+    async with _pool.acquire() as conn:
+        await conn.execute(sql)
 
 
 async def _init_connection(conn: asyncpg.Connection) -> None:

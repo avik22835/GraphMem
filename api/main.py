@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from api.db.postgres import init_pool, close_pool
+from api.db.postgres import init_pool, init_schema, close_pool
 from api.db.neptune import init_neptune, close_neptune
 from api.routes import memory, conversations, topics, utils, auth
 from api.auth.dependencies import get_current_principal
@@ -12,6 +12,7 @@ from api.auth.dependencies import get_current_principal
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_pool()
+    await init_schema()
     init_neptune()
     yield
     await close_pool()
