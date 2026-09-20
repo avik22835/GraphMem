@@ -1,22 +1,24 @@
 import os
 import json
+import time
 import numpy as np
 import httpx
 import psycopg2
 import psycopg2.extras
 import boto3
 from pgvector.psycopg2 import register_vector
-from gremlin_python.driver import client, serializer
 
 # ── Module-level connections (reused across warm Lambda invocations) ──────────
 
 _pg_conn = None
-_neptune_client = None
 _sqs = boto3.client("sqs", region_name=os.environ["AWS_REGION"])
 
 THRESHOLD = float(os.environ.get("DEFAULT_THRESHOLD", "0.4"))
 TOPIC_INTERVAL = int(os.environ.get("TOPIC_RECOMPUTE_INTERVAL", "20"))
 SQS_TOPIC_QUEUE_URL = os.environ["SQS_TOPIC_QUEUE_URL"]
+NEPTUNE_URL = (
+    f"https://{os.environ['NEPTUNE_ENDPOINT']}:{os.environ['NEPTUNE_PORT']}/gremlin"
+)
 
 
 def get_pg():
@@ -34,23 +36,48 @@ def get_pg():
     return _pg_conn
 
 
-def get_neptune():
-    global _neptune_client
-    if _neptune_client is None:
-        endpoint = os.environ["NEPTUNE_ENDPOINT"]
-        port = os.environ["NEPTUNE_PORT"]
-        _neptune_client = client.Client(
-            f"wss://{endpoint}:{port}/gremlin",
-            "g",
-            message_serializer=serializer.GraphSONSerializersV2d0(),
-        )
-    return _neptune_client
+# ── Neptune via HTTP (no gremlinpython / aiohttp needed) ─────────────────────
+
+def neptune(query: str, bindings: dict = None) -> list:
+    resp = httpx.post(
+        NEPTUNE_URL,
+        json={"gremlin": query, "bindings": bindings or {}},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    data = resp.json().get("result", {}).get("data", {})
+    return data.get("@value", []) if isinstance(data, dict) else []
+
+
+def add_vertex(memory_id: str, conversation_id: str) -> None:
+    neptune(
+        "g.addV('memory_node')"
+        ".property('memory_id', mid)"
+        ".property('conversation_id', cid)",
+        {"mid": memory_id, "cid": conversation_id},
+    )
+
+
+def add_edge_pair(src_id: str, dst_id: str, weight: float, conversation_id: str) -> None:
+    neptune(
+        "g.V().has('memory_node','memory_id',src).as('a')"
+        ".V().has('memory_node','memory_id',dst)"
+        ".addE('similar_to').from('a')"
+        ".property('weight',w).property('conversation_id',cid)",
+        {"src": src_id, "dst": dst_id, "w": weight, "cid": conversation_id},
+    )
+    neptune(
+        "g.V().has('memory_node','memory_id',dst).as('a')"
+        ".V().has('memory_node','memory_id',src)"
+        ".addE('similar_to').from('a')"
+        ".property('weight',w).property('conversation_id',cid)",
+        {"src": src_id, "dst": dst_id, "w": weight, "cid": conversation_id},
+    )
 
 
 # ── Jina embedding ────────────────────────────────────────────────────────────
 
 def embed(text: str) -> np.ndarray:
-    import time
     for attempt in range(5):
         resp = httpx.post(
             "https://api.jina.ai/v1/embeddings",
@@ -72,37 +99,6 @@ def embed(text: str) -> np.ndarray:
         vec = np.array(resp.json()["data"][0]["embedding"], dtype=np.float32)
         return vec / np.linalg.norm(vec)
     raise Exception("Jina embed failed after 5 retries (rate limited)")
-
-
-# ── Neptune helpers ───────────────────────────────────────────────────────────
-
-def add_vertex(memory_id: str, conversation_id: str) -> None:
-    get_neptune().submit(
-        "g.addV('memory_node')"
-        ".property('memory_id', mid)"
-        ".property('conversation_id', cid)",
-        {"mid": memory_id, "cid": conversation_id},
-    ).all().result()
-
-
-def add_edge_pair(src_id: str, dst_id: str, weight: float, conversation_id: str) -> None:
-    nc = get_neptune()
-    # src → dst
-    nc.submit(
-        "g.V().has('memory_node','memory_id',src).as('a')"
-        ".V().has('memory_node','memory_id',dst)"
-        ".addE('similar_to').from('a')"
-        ".property('weight',w).property('conversation_id',cid)",
-        {"src": src_id, "dst": dst_id, "w": weight, "cid": conversation_id},
-    ).all().result()
-    # dst → src (bidirectional)
-    nc.submit(
-        "g.V().has('memory_node','memory_id',dst).as('a')"
-        ".V().has('memory_node','memory_id',src)"
-        ".addE('similar_to').from('a')"
-        ".property('weight',w).property('conversation_id',cid)",
-        {"src": src_id, "dst": dst_id, "w": weight, "cid": conversation_id},
-    ).all().result()
 
 
 # ── Core processing ───────────────────────────────────────────────────────────
@@ -191,4 +187,4 @@ def handler(event, context):
             process_node(memory_id, conversation_id)
         except Exception as e:
             print(f"[node_worker] ERROR processing {memory_id}: {e}")
-            raise  # Re-raise so SQS retries (up to 3 times), then DLQ
+            raise  # Re-raise so SQS retries, then DLQ
