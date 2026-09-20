@@ -38,40 +38,40 @@ def get_pg():
 
 # ── Neptune via HTTP (no gremlinpython / aiohttp needed) ─────────────────────
 
-def neptune(query: str, bindings: dict = None) -> list:
+def neptune(query: str) -> list:
     resp = httpx.post(
         NEPTUNE_URL,
-        json={"gremlin": query, "bindings": bindings or {}},
+        json={"gremlin": query},
         timeout=30.0,
     )
-    resp.raise_for_status()
+    if not resp.is_success:
+        print(f"[node_worker] Neptune {resp.status_code}: {resp.text[:500]}")
+        resp.raise_for_status()
     data = resp.json().get("result", {}).get("data", {})
     return data.get("@value", []) if isinstance(data, dict) else []
 
 
 def add_vertex(memory_id: str, conversation_id: str) -> None:
     neptune(
-        "g.addV('memory_node')"
-        ".property('memory_id', mid)"
-        ".property('conversation_id', cid)",
-        {"mid": memory_id, "cid": conversation_id},
+        f"g.addV('memory_node')"
+        f".property('memory_id', '{memory_id}')"
+        f".property('conversation_id', '{conversation_id}')"
     )
 
 
 def add_edge_pair(src_id: str, dst_id: str, weight: float, conversation_id: str) -> None:
+    w = round(weight, 6)
     neptune(
-        "g.V().has('memory_node','memory_id',src).as('a')"
-        ".V().has('memory_node','memory_id',dst)"
-        ".addE('similar_to').from('a')"
-        ".property('weight',w).property('conversation_id',cid)",
-        {"src": src_id, "dst": dst_id, "w": weight, "cid": conversation_id},
+        f"g.V().has('memory_node','memory_id','{src_id}').as('a')"
+        f".V().has('memory_node','memory_id','{dst_id}')"
+        f".addE('similar_to').from('a')"
+        f".property('weight',{w}).property('conversation_id','{conversation_id}')"
     )
     neptune(
-        "g.V().has('memory_node','memory_id',dst).as('a')"
-        ".V().has('memory_node','memory_id',src)"
-        ".addE('similar_to').from('a')"
-        ".property('weight',w).property('conversation_id',cid)",
-        {"src": src_id, "dst": dst_id, "w": weight, "cid": conversation_id},
+        f"g.V().has('memory_node','memory_id','{dst_id}').as('a')"
+        f".V().has('memory_node','memory_id','{src_id}')"
+        f".addE('similar_to').from('a')"
+        f".property('weight',{w}).property('conversation_id','{conversation_id}')"
     )
 
 
