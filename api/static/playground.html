@@ -240,8 +240,8 @@
 <script src="/static/js/auth.js"></script>
 <script>
 const CONF = {
-  conv1: { id: '0eaf5486-63c6-4f5c-a4d8-5c761f1fa91d' },
-  conv2: { id: '0fd00ae3-5ffe-48f9-a3dc-6ac2e6badb16' },
+  conv1: { id: 'b32510eb-da96-4c7c-a1e2-7cda8c98354c' },
+  conv2: { id: '7d8abf74-76c4-40ce-abc3-7879f59ce533' },
 };
 const state = {
   conv: 'conv2', method: 'memory.recall', outputTab: 'cards',
@@ -481,7 +481,7 @@ dataset = [{"prompt":n["prompt"],"completion":n["response"]} for n in nodes]`,
     id:'conversations.delete', ns:'conversations', label:'delete', badge:'DELETE', http:'DELETE /conversations/{conv_id}',
     desc:'Permanently deletes a conversation and all its nodes, topics, and Neptune graph edges.',
     usecase:'User deletes their account or session expires — GDPR cleanup, storage hygiene.',
-    params:[{id:'conv_id',label:'Conv ID',type:'text',def:'',defConv1:'0eaf5486-63c6-4f5c-a4d8-5c761f1fa91d',defConv2:'0fd00ae3-5ffe-48f9-a3dc-6ac2e6badb16'}],
+    params:[{id:'conv_id',label:'Conv ID',type:'text',def:'',defConv1:'b32510eb-da96-4c7c-a1e2-7cda8c98354c',defConv2:'7d8abf74-76c4-40ce-abc3-7879f59ce533'}],
     code:(cid,p)=>
 `gm.conversations.delete(conv_id="${p.conv_id||cid}")`,
     execute: async (cid,p) => {
