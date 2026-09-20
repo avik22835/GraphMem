@@ -1,21 +1,24 @@
 import os
 import json
 import uuid
+import httpx
 import numpy as np
 import networkx as nx
 import psycopg2
 import psycopg2.extras
 from pgvector.psycopg2 import register_vector
 from groq import Groq
-from gremlin_python.driver import client as gremlin_client, serializer
 import community as community_louvain
 from datetime import datetime, timezone
 
 # ── Module-level connections (reused across warm invocations) ─────────────────
 
-_pg_conn        = None
-_neptune_client = None
-_groq_client    = None
+_pg_conn     = None
+_groq_client = None
+
+NEPTUNE_URL = (
+    f"https://{os.environ['NEPTUNE_ENDPOINT']}:{os.environ['NEPTUNE_PORT']}/gremlin"
+)
 
 LOUVAIN_DEFAULT_RESOLUTION = float(os.environ.get("LOUVAIN_DEFAULT_RESOLUTION", "1.0"))
 TOPIC_MIN_CLUSTER_SIZE     = int(os.environ.get("TOPIC_MIN_CLUSTER_SIZE", "2"))
@@ -40,17 +43,25 @@ def get_pg():
     return _pg_conn
 
 
-def get_neptune():
-    global _neptune_client
-    if _neptune_client is None:
-        endpoint = os.environ["NEPTUNE_ENDPOINT"]
-        port     = os.environ["NEPTUNE_PORT"]
-        _neptune_client = gremlin_client.Client(
-            f"wss://{endpoint}:{port}/gremlin",
-            "g",
-            message_serializer=serializer.GraphSONSerializersV2d0(),
-        )
-    return _neptune_client
+def neptune(query: str) -> list:
+    resp = httpx.post(NEPTUNE_URL, json={"gremlin": query}, timeout=30.0)
+    if not resp.is_success:
+        print(f"[topic_worker] Neptune {resp.status_code}: {resp.text[:500]}")
+        resp.raise_for_status()
+    data = resp.json().get("result", {}).get("data", {})
+    return data.get("@value", []) if isinstance(data, dict) else []
+
+
+def _parse_gmap(item: dict) -> dict:
+    vals = item.get("@value", [])
+    out = {}
+    for i in range(0, len(vals), 2):
+        k = vals[i]
+        v = vals[i + 1]
+        if isinstance(v, dict) and "@value" in v:
+            v = v["@value"]
+        out[k] = v
+    return out
 
 
 def get_groq():
@@ -63,23 +74,22 @@ def get_groq():
 # ── Graph construction from Neptune ──────────────────────────────────────────
 
 def _build_networkx_graph(conversation_id: str, node_ids: set) -> nx.Graph:
-    nc    = get_neptune()
-    edges = nc.submit(
-        "g.V().has('memory_node','conversation_id',cid)"
+    raw = neptune(
+        f"g.V().has('memory_node','conversation_id','{conversation_id}')"
         ".outE('similar_to')"
         ".project('src','dst','weight')"
         ".by(outV().values('memory_id'))"
         ".by(inV().values('memory_id'))"
-        ".by('weight')",
-        {"cid": conversation_id},
-    ).all().result()
+        ".by('weight')"
+    )
 
     G = nx.Graph()
-    G.add_nodes_from(node_ids)           # isolated nodes get own singleton cluster
-    for e in edges:
-        src, dst = e["src"], e["dst"]
-        if src in node_ids and dst in node_ids:
-            G.add_edge(src, dst, weight=float(e["weight"]))
+    G.add_nodes_from(node_ids)
+    for item in raw:
+        e = _parse_gmap(item) if isinstance(item, dict) and "@value" in item else item
+        src, dst = e.get("src"), e.get("dst")
+        if src and dst and src in node_ids and dst in node_ids:
+            G.add_edge(src, dst, weight=float(e.get("weight", 1.0)))
     return G
 
 
