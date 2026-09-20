@@ -38,3 +38,11 @@ jobs:
           docker build -t 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker \
             -f workers/topic_worker/Dockerfile workers/topic_worker/
           docker push 748439418518.dkr.ecr.us-east-1.amazonaws.com/avik22835/graphmem:topic-worker
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster graphmem-cluster \
+            --service graphmem-service \
+            --force-new-deployment \
+            --region us-east-1
