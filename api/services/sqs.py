@@ -15,10 +15,11 @@ def push_node_job(memory_id: str, conversation_id: str) -> None:
     )
 
 
-def push_topic_job(conversation_id: str) -> None:
-    _sqs.send_message(
-        QueueUrl=settings.sqs_topic_queue_url,
-        MessageBody=json.dumps({
-            "conversation_id": conversation_id,
-        }),
-    )
+def push_topic_job(conversation_id: str, delay_seconds: int = 0) -> None:
+    kwargs = {
+        "QueueUrl": settings.sqs_topic_queue_url,
+        "MessageBody": json.dumps({"conversation_id": conversation_id}),
+    }
+    if delay_seconds > 0:
+        kwargs["DelaySeconds"] = delay_seconds
+    _sqs.send_message(**kwargs)

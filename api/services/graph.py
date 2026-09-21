@@ -2,16 +2,16 @@ import json
 import math
 import uuid
 import asyncio
+import httpx
+import networkx as nx
 import numpy as np
 from datetime import datetime, timezone
 from api.config import settings
 from api.db.postgres import get_pool
-from api.db.neptune import get_traversal
 from api.exceptions import ConversationNotFound
 from api.models import MemoryNodeWithScore, RecallResult
 from api.services.embedding import embed_query
 from api.services.tokens import count_node_tokens
-from gremlin_python.process.traversal import P
 
 
 # ── Public entrypoint ─────────────────────────────────────────────────────────
@@ -65,11 +65,12 @@ async def recall(
         a_ids    = {str(r["memory_id"]) for r in a_rows}
         a_scores = {str(r["memory_id"]): float(r["cosine_score"]) for r in a_rows}
 
-        # ── Set C via Neptune (sync → thread) ────────────────────────────────
-        c_raw_ids = await asyncio.to_thread(
-            _set_c_neptune, list(b_ids), conversation_id, _threshold
+        # ── Set C via PPR (sync → thread) ────────────────────────────────
+        ppr_scores = await asyncio.to_thread(
+            _set_c_ppr, list(b_ids), conversation_id
         )
-        c_ids = c_raw_ids - b_ids - a_ids
+        # ppr_scores: {memory_id → ppr_score}, already excludes seed ids
+        c_ids = set(ppr_scores.keys()) - a_ids
 
         c_rows = await _fetch_with_embeddings(conn, list(c_ids)) if c_ids else []
 
@@ -95,8 +96,11 @@ async def recall(
             if mid not in r_ids and mid not in seen:
                 seen.add(mid)
                 node_emb = np.array(row["embedding"], dtype=np.float32)
-                score = float(np.dot(q_emb, node_emb))
-                candidates.append(_to_candidate(row, score))
+                cos_sim = float(np.dot(q_emb, node_emb))
+                ppr = ppr_scores.get(mid, 0.0)
+                # PPR × cosine: structural graph relevance × semantic match
+                combined = ppr * cos_sim
+                candidates.append(_to_candidate(row, combined))
 
         # ── Token budgeting (R exempt) ────────────────────────────────────────
         r_tokens = sum(count_node_tokens(r["prompt"], r["response"]) for r in r_rows)
@@ -188,23 +192,73 @@ async def _set_a_prime(conn, conv_uuid, q_emb, threshold, b_ids: set):
     )
 
 
-# ── Set C via Neptune ─────────────────────────────────────────────────────────
+# ── Set C via Personalized PageRank ──────────────────────────────────────────
 
-def _set_c_neptune(b_id_list: list[str], conversation_id: str, threshold: float) -> set[str]:
-    if not b_id_list:
-        return set()
-    g = get_traversal()
-    result = (
-        g.V()
-        .has("memory_node", "memory_id", P.within(b_id_list))
-        .outE("similar_to")
-        .has("weight", P.gte(threshold))          # defensive: re-check weight
-        .has("conversation_id", conversation_id)
-        .inV()
-        .values("memory_id")
-        .to_list()
+def _parse_gmap(item: dict) -> dict:
+    vals = item.get("@value", [])
+    out = {}
+    for i in range(0, len(vals), 2):
+        k = vals[i]
+        v = vals[i + 1]
+        if isinstance(v, dict) and "@value" in v:
+            v = v["@value"]
+        out[k] = v
+    return out
+
+
+def _set_c_ppr(b_ids: list[str], conversation_id: str, ppr_threshold: float = 0.005) -> dict[str, float]:
+    """Pull all conv edges from Neptune, run PPR seeded on b_ids.
+    Returns {memory_id: ppr_score} for nodes above threshold, excluding seeds."""
+    if not b_ids:
+        return {}
+
+    neptune_url = f"https://{settings.neptune_endpoint}:{settings.neptune_port}/gremlin"
+    query = (
+        f"g.V().has('memory_node','conversation_id','{conversation_id}')"
+        ".outE('similar_to')"
+        ".project('src','dst','weight')"
+        ".by(outV().values('memory_id'))"
+        ".by(inV().values('memory_id'))"
+        ".by('weight')"
     )
-    return set(result) - set(b_id_list)
+
+    try:
+        resp = httpx.post(neptune_url, json={"gremlin": query}, timeout=30.0)
+        if not resp.is_success:
+            return {}
+        data = resp.json().get("result", {}).get("data", {})
+        raw_edges = data.get("@value", []) if isinstance(data, dict) else []
+    except Exception:
+        return {}
+
+    if not raw_edges:
+        return {}
+
+    G = nx.DiGraph()
+    for item in raw_edges:
+        e = _parse_gmap(item) if isinstance(item, dict) and "@value" in item else item
+        src, dst, w = e.get("src"), e.get("dst"), float(e.get("weight", 1.0))
+        if src and dst:
+            G.add_edge(src, dst, weight=w)
+
+    if not G.nodes:
+        return {}
+
+    valid_seeds = [sid for sid in b_ids if sid in G.nodes]
+    if not valid_seeds:
+        return {}
+
+    personalization = {n: 0.0 for n in G.nodes}
+    for sid in valid_seeds:
+        personalization[sid] = 1.0 / len(valid_seeds)
+
+    try:
+        ppr = nx.pagerank(G, alpha=0.85, personalization=personalization, weight="weight", max_iter=100)
+    except Exception:
+        return {}
+
+    b_set = set(b_ids)
+    return {nid: score for nid, score in ppr.items() if score >= ppr_threshold and nid not in b_set}
 
 
 # ── Fetch Set C nodes with embeddings for Python-side scoring ─────────────────

@@ -59,7 +59,16 @@ async def list_topics(conversation_id: str, status: str | None = None) -> list[d
                 conv_uuid,
             )
 
-    return [_serialize_topic(r) for r in rows]
+    topics = [_serialize_topic(r) for r in rows]
+
+    # Self-heal: if any topic has the fallback label, trigger a background recompute
+    if any(t["label"] == "Unlabeled cluster" for t in topics):
+        try:
+            push_topic_job(conversation_id, delay_seconds=10)
+        except Exception:
+            pass  # never block the read for an SQS failure
+
+    return topics
 
 
 # ── topic_info ────────────────────────────────────────────────────────────────

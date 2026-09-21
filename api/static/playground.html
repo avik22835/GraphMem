@@ -872,7 +872,7 @@ function renderStats(data, el, c) {
         <div class="rs-key">Strategy</div>
       </div>
     </div>
-    <div class="token-savings">
+    ${strategy !== 'cold_start' ? `<div class="token-savings">
       <div class="ts-title">Token context comparison</div>
       <div class="ts-row">
         <div class="ts-lbl"><span>Full history (est.)</span><span>${fullEst.toLocaleString()} tokens</span></div>
@@ -883,7 +883,7 @@ function renderStats(data, el, c) {
         <div class="ts-track"><div class="ts-fill" style="width:${gmW}%">${gmW>12?gmW+'%':''}</div></div>
       </div>
       ${pct > 0 ? `<div class="ts-savings">↓ ${pct}% token reduction — ${(fullEst-gmTokens).toLocaleString()} tokens saved</div>` : ''}
-    </div>`;
+    </div>` : ''}`;
 }
 
 /* ── Init ─────────────────────────────────────────────────────────── */

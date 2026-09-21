@@ -13,7 +13,7 @@ from pgvector.psycopg2 import register_vector
 _pg_conn = None
 _sqs = boto3.client("sqs", region_name=os.environ["AWS_REGION"])
 
-THRESHOLD = float(os.environ.get("DEFAULT_THRESHOLD", "0.4"))
+THRESHOLD = float(os.environ.get("DEFAULT_THRESHOLD", "0.6"))
 TOPIC_INTERVAL = int(os.environ.get("TOPIC_RECOMPUTE_INTERVAL", "20"))
 SQS_TOPIC_QUEUE_URL = os.environ["SQS_TOPIC_QUEUE_URL"]
 NEPTUNE_URL = (
@@ -61,17 +61,22 @@ def add_vertex(memory_id: str, conversation_id: str) -> None:
 
 def add_edge_pair(src_id: str, dst_id: str, weight: float, conversation_id: str) -> None:
     w = round(weight, 6)
+    # coalesce: find existing edge or create — idempotent on Lambda retry
     neptune(
         f"g.V().has('memory_node','memory_id','{src_id}').as('a')"
         f".V().has('memory_node','memory_id','{dst_id}')"
-        f".addE('similar_to').from('a')"
-        f".property('weight',{w}).property('conversation_id','{conversation_id}')"
+        f".coalesce("
+        f"  __.inE('similar_to').where(outV().as('a')),"
+        f"  __.addE('similar_to').from('a')"
+        f").property('weight',{w}).property('conversation_id','{conversation_id}')"
     )
     neptune(
         f"g.V().has('memory_node','memory_id','{dst_id}').as('a')"
         f".V().has('memory_node','memory_id','{src_id}')"
-        f".addE('similar_to').from('a')"
-        f".property('weight',{w}).property('conversation_id','{conversation_id}')"
+        f".coalesce("
+        f"  __.inE('similar_to').where(outV().as('a')),"
+        f"  __.addE('similar_to').from('a')"
+        f").property('weight',{w}).property('conversation_id','{conversation_id}')"
     )
 
 
@@ -131,17 +136,20 @@ def process_node(memory_id: str, conversation_id: str) -> None:
     # 4. Insert Neptune vertex
     add_vertex(memory_id, conversation_id)
 
-    # 5. Find all existing complete nodes with similarity >= threshold
+    # 5. Find top-15 most similar existing nodes, then filter by threshold 0.6.
+    # Cap prevents dense graphs on long technical conversations regardless of content.
+    # Threshold 0.6 ensures edges represent genuine semantic similarity.
     cur.execute(
         """SELECT memory_id::text, 1 - (embedding <=> %s) AS sim
            FROM memory_nodes
            WHERE conversation_id = %s::uuid
              AND status = 'complete'
              AND memory_id != %s::uuid
-             AND embedding <=> %s <= %s""",
-        (embedding, conversation_id, memory_id, embedding, 1 - THRESHOLD),
+           ORDER BY embedding <=> %s
+           LIMIT 15""",
+        (embedding, conversation_id, memory_id, embedding),
     )
-    neighbours = cur.fetchall()
+    neighbours = [n for n in cur.fetchall() if float(n["sim"]) >= THRESHOLD]
 
     # 6. Insert bidirectional Neptune edges for each neighbour above threshold
     for n in neighbours:
@@ -164,11 +172,13 @@ def process_node(memory_id: str, conversation_id: str) -> None:
     conn.commit()
     node_count = result["node_count"]
 
-    # 8. Trigger topic recompute every N nodes
+    # 8. Trigger topic recompute every N nodes.
+    # DelaySeconds=60 lets Jina/Groq rate limits settle before topic_worker fires.
     if node_count % TOPIC_INTERVAL == 0:
         _sqs.send_message(
             QueueUrl=SQS_TOPIC_QUEUE_URL,
             MessageBody=json.dumps({"conversation_id": conversation_id}),
+            DelaySeconds=60,
         )
         print(f"[node_worker] Triggered topic recompute at node_count={node_count}")
 
