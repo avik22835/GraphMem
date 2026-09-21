@@ -319,7 +319,7 @@
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">query</span><span class="sig-paren">: </span><span class="sig-type">str</span><span class="sig-paren">,</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-default">*,</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">k</span><span class="sig-paren">: </span><span class="sig-type">int</span> <span class="sig-default">= 5</span><span class="sig-paren">,</span><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">threshold</span><span class="sig-paren">: </span><span class="sig-type">float</span> <span class="sig-default">= 0.4</span><span class="sig-paren">,</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">threshold</span><span class="sig-paren">: </span><span class="sig-type">float</span> <span class="sig-default">= 0.6</span><span class="sig-paren">,</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">strategy</span><span class="sig-paren">: </span><span class="sig-type">str</span> <span class="sig-default">= "semantic"</span><span class="sig-paren">,</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">recency_alpha</span><span class="sig-paren">: </span><span class="sig-type">float</span> <span class="sig-default">= 0.7</span><span class="sig-paren">,</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">recency_half_life</span><span class="sig-paren">: </span><span class="sig-type">float | None</span> <span class="sig-default">= None</span><span class="sig-paren">,</span><br>
@@ -327,7 +327,7 @@
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="sig-param">max_tokens</span><span class="sig-paren">: </span><span class="sig-type">int | None</span> <span class="sig-default">= None</span><span class="sig-paren">,</span><br>
         <span class="sig-paren">) → </span><span class="sig-ret">dict</span>
       </div>
-      <p class="method-desc">The core retrieval method. Embeds the query, runs a multi-set graph traversal, applies a token budget, and returns ordered context ready to inject into your LLM prompt. Internally returns the union of Set B (top-K cosine), Set A&prime; (threshold neighbours), Set C (Neptune 1-hop graph expansion), and Set R (recency guard).</p>
+      <p class="method-desc">The core retrieval method. Embeds the query, runs a multi-set graph traversal, applies a token budget, and returns ordered context ready to inject into your LLM prompt. Internally returns the union of Set B (top-K cosine), Set A&prime; (threshold neighbours), Set C (graph expansion via Personalized PageRank), and Set R (recency guard).</p>
       <p class="params-label">Parameters</p>
       <table class="params-table" style="margin-bottom:20px;">
         <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
@@ -335,7 +335,7 @@
           <tr><td>conversation_id</td><td>str</td><td>required</td><td>Which conversation to search.</td></tr>
           <tr><td>query</td><td>str</td><td>required</td><td>The current user message or search query.</td></tr>
           <tr><td>k</td><td>int</td><td>5</td><td>Top-K nodes for Set B (cosine search).</td></tr>
-          <tr><td>threshold</td><td>float</td><td>0.4</td><td>Cosine similarity floor for Set A&prime; neighbours.</td></tr>
+          <tr><td>threshold</td><td>float</td><td>0.6</td><td>Cosine similarity floor for Set A&prime; neighbours.</td></tr>
           <tr><td>strategy</td><td>"semantic" | "semantic_recency"</td><td>"semantic"</td><td><code class="mono" style="font-size:11px;">semantic_recency</code> blends cosine score with a recency decay function.</td></tr>
           <tr><td>recency_alpha</td><td>float</td><td>0.7</td><td>Weight of cosine vs recency when using <code class="mono" style="font-size:11px;">semantic_recency</code>. 1.0 = pure cosine, 0.0 = pure recency.</td></tr>
           <tr><td>recency_half_life</td><td>float | None</td><td>None</td><td>Seconds for the recency score to halve. Defaults to server-side value if None.</td></tr>

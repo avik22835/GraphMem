@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # GraphMem defaults
     default_k: int = 5
-    default_threshold: float = 0.4
+    default_threshold: float = 0.6
     default_max_tokens: int = 2000
     topic_recompute_interval: int = 20
     cold_start_min_nodes: int = 5
